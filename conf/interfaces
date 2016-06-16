@@ -1,0 +1,61 @@
+# /etc/network/interfaces
+
+# check for any superceding configuration stanzas in ./interfaces.d/
+source "/etc/network/interfaces.d/*"
+
+# enable the local loopback interface
+auto lo
+iface lo inet loopback
+
+# enable physical interfaces as required
+allow-hotplug eth0
+iface eth0 inet manual
+        broadcast  <broadcast_address>
+        network <network_address>
+        dns-nameservers 8.8.8.8 8.8.4.4
+        dns-search seednode.co
+
+iface eth1 inet manual
+
+iface eth2 inet manual
+
+iface eth3 inet manual
+
+# vmbr0 is the bridge interface acting as a gateway for any virtual machines
+# assigned a public IP address; it's also the IP we use to connect to the VM host
+auto vmbr0
+iface vmbr0 inet static
+        address  <public_ip_for_vm_host>
+        netmask  255.255.255.248
+        gateway  <gateway_for_vm_host>
+        bridge_ports eth0
+        bridge_stp off
+        bridge_fd 0
+        bridge_vlan_aware yes
+
+# vmbr1 is the bridge interface connecting the directly attached storage node 
+# at address 10.0.10.1, running NAS4Free and connected to physical interface eth3
+auto vmbr1
+iface vmbr1 inet static
+        address  10.0.10.2
+        netmask  255.255.255.0
+        bridge_ports eth3
+        bridge_stp off
+        bridge_fd 0
+        bridge_vlan_aware yes
+
+# vmbr2 is the bridge interface functioning as a gateway for any virtual machines
+# assigned private IP addresses and NATed out to the public internet
+auto vmbr2
+iface vmbr2 inet static
+        address  10.10.10.1
+        netmask  255.255.255.0
+        bridge_ports none
+        bridge_stp off
+        bridge_fd 0
+
+	# these commands enable IP forwarding and set up the NAT from our public interface
+	# to all VMs running on private network 10.10.10.0/24
+	post-up echo 1 > /proc/sys/net/ipv4/ip_forward
+        post-up   iptables -t nat -A POSTROUTING -s '10.10.10.0/24' -o vmbr0 -j MASQUERADE
+        post-down iptables -t nat -D POSTROUTING -s '10.10.10.0/24' -o vmbr0 -j MASQUERADE
