@@ -1,5 +1,5 @@
 #!/bin/bash                                                                                                                                                  __
-# a script to share your terminal with GoTTY; run the accompanying "join" script to connect to the created session
+# a script to share your terminal with GoTTY; run "tmux new -A -s gotty" to reconnect to the created session if detached
                                                                                                                                                    __
 # check for existing tmux instances                                                                                                                          __
 existing_sessions=$(tmux list-sessions | head -n1 | cut -d ":" -f 1 | grep run-gotty)                                                                        __
