@@ -105,6 +105,14 @@ http {
             proxy_pass http://10.10.10.13:8080/;
         }
 
+        location /docker/ {
+            # remove the trailing /docker/ from the URL when loading this site
+            rewrite ^/watchme/(.*) /$1 break;
+
+            # redirect traffic pointed at seednode.co/docker/ to a docker jail
+            proxy_pass http://10.10.10.13:8090/;
+        }
+
         location /guacamole/ {
             proxy_pass http://10.10.10.17:8080/guacamole/;
             proxy_set_header Connection $http_connection;
