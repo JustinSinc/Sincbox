@@ -55,6 +55,9 @@ http {
 	# this nginx vhost is only listening for connections to seednode.co
 	server_name  seednode.co;
 
+	# strip .html extensions
+        rewrite ^(/.+)/.html$ $scheme://$host$1 permanent;
+
 	# strip trailing /index.html
 	rewrite ^(.*)/index.html$ $1 permanent;
 	
@@ -78,6 +81,11 @@ http {
 	    # redirect traffic pointed at seednode.co/ to my landing page
             proxy_pass http://10.10.10.7:80/;
 	}
+
+        location /docs/ {
+                # redirect to landing page
+                proxy_pass http://10.10.10.7:80/docs/;
+        }
 
 	location /code/ {
 	    # redirect traffic pointed at seednode.co/code/ to my codiad IDE
