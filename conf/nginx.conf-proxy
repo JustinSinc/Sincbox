@@ -130,10 +130,10 @@ http {
         }
 
 	location /sandbox/ {
-            # remove the trailing /useless/ from the URL when loading this site
+            # remove the trailing /sandbox/ from the URL when loading this site
             rewrite ^/useless/(.*) /$1 break;
 
-            # redirect traffic pointed at seednode.co/useless/ to a links instance
+            # redirect traffic pointed at seednode.co/sandbox/ to the demo box
             proxy_pass http://10.10.10.13:8085/;
         }
 
