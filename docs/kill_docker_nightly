@@ -1,0 +1,2 @@
+# add the following to crontab to kill all running containers at midnight every night
+0 0 * * * docker rm -f $(docker ps -a -q)
