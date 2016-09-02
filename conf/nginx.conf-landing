@@ -26,24 +26,14 @@ http {
 
         error_page 500 502 503 504 /custom_50x.html;
 
-        # rewrite html extensions
-        rewrite ^(/.+)\.html$ $scheme://$host$1 permanent;
-
         location = /custom_50x.html {
                 root /usr/share/nginx/html;
                 internal;
         }
 
         location / {
-            root   html;
+            root   /usr/share/nginx/html;
             index  index.html index.htm;
-        }
-
-        location /docs/ {
-            root /usr/share/nginx/html;
-            index index.html;
-            autoindex on;
-            try_files $uri.html $uri $uri/ @handler;
         }
     }
 }
