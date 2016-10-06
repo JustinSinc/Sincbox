@@ -106,7 +106,7 @@ http {
 
         location /docker/ {
             # remove the trailing /docker/ from the URL when loading this site
-            rewrite ^/watchme/(.*) /$1 break;
+            rewrite ^/docker/(.*) /$1 break;
 
             # redirect traffic pointed at seednode.co/docker/ to a docker jail
             proxy_pass http://10.10.10.13:8090/;
@@ -122,7 +122,7 @@ http {
 
 	location /sandbox/ {
             # remove the trailing /sandbox/ from the URL when loading this site
-            rewrite ^/useless/(.*) /$1 break;
+            rewrite ^/sandbox/(.*) /$1 break;
 
             # redirect traffic pointed at seednode.co/sandbox/ to the demo box
             proxy_pass http://10.10.10.13:8085/;
