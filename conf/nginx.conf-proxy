@@ -92,17 +92,8 @@ http {
 	    proxy_pass http://10.10.10.15:80/;
 	}        
 
-        location /music/ {
-	    # redirect traffic pointed at seednode.co/music/ to my Subsonic server
-            proxy_pass https://10.10.10.6:40443;
-        }
-
 	location /irc/ {
 	    proxy_pass http://10.10.10.8:8080/;
-	}
-
-	location /photos/ {
-	    proxy_pass http://10.10.10.16:80/;
 	}
 
         location /watchme/ {
