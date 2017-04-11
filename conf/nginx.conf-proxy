@@ -99,21 +99,7 @@ http {
         location / {
 	    # redirect traffic pointed at seednode.co/ to my landing page
             proxy_pass http://10.10.10.7:80/;
-	}
-
-        location /docs/ {
-                # redirect to landing page
-                proxy_pass http://10.10.10.7:80/docs/;
-        }
-
-	location /code/ {
-	    # redirect traffic pointed at seednode.co/code/ to my codiad IDE
-	    proxy_pass http://10.10.10.15:80/;
-	}        
-
-	location /irc/ {
-	    proxy_pass http://10.10.10.8:8080/;
-	}
+	}   
 
         location /watchme/ {
 	    # remove the trailing /watchme/ from the URL when loading this site
