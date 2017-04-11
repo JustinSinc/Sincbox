@@ -25,17 +25,10 @@ http {
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header Host $http_host;
     proxy_http_version 1.1;
-	
-    # enforce Header Strict Transport Security (HSTS) to prevent SSL MiTM attacks
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-    
+
     # extend proxy timeout time to prevent issues with proxied websockets connections
     proxy_read_timeout 120s;
-    
-    # share the SSL session cache
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 10m;
-    
+
     # tell nginx what sort of content we'll be displaying
     include       mime.types;
     default_type  application/octet-stream;
@@ -67,10 +60,36 @@ http {
 	ssl_certificate_key /etc/letsencrypt/live/seednode.co/privkey.pem;
 	ssl_dhparam /etc/ssl/dhparams.pem;
 	
+	 # enable http public key pinning extension (hpkp)
+        add_header Public-Key-Pins 'pin-sha256="YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg="; pin-sha256="Cg2nS+yDEqJGTPoVwUjX66obkY4zkopMXOjtZ7yJR3g="; max-age=2592000; includeSubDomains';
+
+        # enable http strict transport security (hsts)
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+	
 	# disable insecure SSL implementations and ciphers
-	ssl_protocols TLSv1.2 TLSv1.1 TLSv1;
-	ssl_prefer_server_ciphers on;
-	ssl_ciphers "EECDH+ECDSA+AESGCM EECDH+aRSA+AESGCM EECDH+ECDSA+SHA384 EECDH+ECDSA+SHA256 EECDH+aRSA+SHA384 EECDH+aRSA+SHA256 EECDH+aRSA+RC4 EECDH EDH+aRSA !RC4 !aNULL !eNULL !LOW !3DES !MD5 !EXP !PSK !SRP !DSS";
+	ssl_protocols TLSv1.2 TLSv1.1;
+        ssl_prefer_server_ciphers on;
+        ssl_ecdh_curve secp384r1;
+        ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
+
+	# disable ssl session tickets to ensure perfect forward secrecy
+        ssl_session_cache shared:SSL:10m;
+        ssl_session_tickets off;
+
+        # enable OSCP stapling
+        ssl_stapling on;
+        ssl_stapling_verify on;
+        resolver 8.8.8.8 8.8.4.4 valid=300s;
+        resolver_timeout 5s;
+
+        # block clickjacking attacks
+        add_header X-Frame-Options DENY;
+
+        # disable content-type sniffing
+        add_header X-Content-Type-Options nosniff;
+
+        # force-enable cross-site scripting protection
+        add_header X-XSS-Protection "1; mode=block";
 
 	location = /index.html {
             rewrite  ^ / permanent;
