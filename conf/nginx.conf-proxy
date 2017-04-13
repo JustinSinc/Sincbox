@@ -61,7 +61,7 @@ http {
 	ssl on;
 	ssl_certificate /etc/letsencrypt/live/seednode.co/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/seednode.co/privkey.pem;
-	ssl_dhparam /etc/ssl/dhparams.pem;
+	ssl_dhparam ssl/dhparam.pem;
 	
 	 # enable http public key pinning extension (hpkp)
         add_header Public-Key-Pins 'pin-sha256="YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg="; pin-sha256="Cg2nS+yDEqJGTPoVwUjX66obkY4zkopMXOjtZ7yJR3g="; max-age=2592000; includeSubDomains';
