@@ -101,52 +101,23 @@ http {
 	}
 
         location / {
-	    # redirect traffic pointed at seednode.co/ to my landing page
-            proxy_pass http://10.10.10.7:80/;
-	}   
+            # check if a given URI exists locally first
+            root /opt/local/files;
+            try_files $uri $uri/ @proxy;
+        }
+
+        location @proxy {
+            # if not, redirect to my landing page at seednode.co/
+            proxy_pass http://10.0.0.3:80;
+        }
+
+        location /files/ {
+            root /opt/local/files/;
+        }
 
         location /watchme/ {
-	    # remove the trailing /watchme/ from the URL when loading this site
-            rewrite ^/watchme/(.*) /$1 break;
-            
-	    # redirect traffic pointed at seednode.co/watchme/ to my GoTTY instance on the docker machine
-            proxy_pass http://10.10.10.13:8080/;
+            # redirect to landing page
+            proxy_pass http://208.110.227.11:1337/;
         }
-
-        location /docker/ {
-            # remove the trailing /docker/ from the URL when loading this site
-            rewrite ^/docker/(.*) /$1 break;
-
-            # redirect traffic pointed at seednode.co/docker/ to a docker jail
-            proxy_pass http://10.10.10.13:8090/;
-        }
-
-	location /useless/ {
-            # remove the trailing /useless/ from the URL when loading this site
-            rewrite ^/useless/(.*) /$1 break;
-
-            # redirect traffic pointed at seednode.co/useless/ to a links instance
-            proxy_pass http://10.10.10.13:8095/;
-        }
-
-	location /sandbox/ {
-            # remove the trailing /sandbox/ from the URL when loading this site
-            rewrite ^/sandbox/(.*) /$1 break;
-
-            # redirect traffic pointed at seednode.co/sandbox/ to the demo box
-            proxy_pass http://10.10.10.13:8085/;
-        }
-
-        location /guacamole/ {
-            proxy_pass http://10.10.10.17:8080/guacamole/;
-            proxy_set_header Connection $http_connection;
-            proxy_buffering off;
-            access_log off;
-        }
-
-	# the following are vhosts directing traffic to each user's personal services (i.e. website, ZNC)
-	location /starsparrow/ {
-	    proxy_pass http://10.10.10.11:80/;
-	}
     }
 }
