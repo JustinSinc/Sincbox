@@ -112,7 +112,7 @@ http {
         }
 
         location /watchme/ {
-            # redirect to landing page
+            # redirect to terminal livestream
             proxy_pass http://208.110.227.11:1337/;
         }
     }
