@@ -112,26 +112,35 @@ http {
         }
 
         location /watchme/ {
-            # redirect to landing page
+            # redirect to terminal broadcast page
             proxy_pass http://208.110.227.11:1338/;
 
-            proxy_set_header x-forwarded-for $remote_addr;
-
             # Websocket support (from version 1.4)
+            proxy_set_header x-forwarder-for $proxy_add_x_forwarded_for;
             proxy_http_version 1.1;
+            proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
+            proxy_set_header X-NginX-Proxy true;
+            proxy_ssl_session_reuse off;
+            proxy_set_header Host $http_host;
+            proxy_redirect off;
         }
 
         location /tryme/ {
             # redirect to alpine linux container demo
             proxy_pass http://208.110.227.11:1337/;
-            proxy_set_header x-forwarded-for $remote_addr;
 
             # Websocket support (from version 1.4)
+            proxy_set_header x-forwarder-for $proxy_add_x_forwarded_for;
             proxy_http_version 1.1;
+            proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
+            proxy_set_header X-NginX-Proxy true;
+            proxy_ssl_session_reuse off;
+            proxy_set_header Host $http_host;
+            proxy_redirect off;
         }
     }
 }
