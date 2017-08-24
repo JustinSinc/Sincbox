@@ -119,7 +119,7 @@ http {
             # disable caches
             expires 0;
 
-            # redirect to landing page
+            # redirect to terminal live stream
             proxy_pass http://208.110.227.11:1338/;
 
             # websocket support
