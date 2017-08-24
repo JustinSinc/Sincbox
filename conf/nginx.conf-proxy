@@ -89,7 +89,9 @@ http {
         add_header X-XSS-Protection "1; mode=block";
 
 	location = /index.html {
+	    # don't display the 'index.html' part of the URL
             rewrite  ^ / permanent;
+	    # if no index exists, respond with a 404 error
 	    try_files /index.html =404;
 	}
 
@@ -101,6 +103,7 @@ http {
         }
 
 	location /thanks.html {
+	    # when accessing the acknowledgements page, set the proper root directory
             root /opt/local/files/thanks/;
         }
 
