@@ -96,6 +96,7 @@ http {
         location ~* ^.+\.(wav|ogg|mp3|txt|tar|rar|gz|zip)$ {
             # check if a given URI exists locally first
             root /opt/local/files;
+	    # if it does, serve that instead of a webpage
             try_files $uri $uri/;
         }
 
