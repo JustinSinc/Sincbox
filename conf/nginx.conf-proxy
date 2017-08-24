@@ -95,7 +95,7 @@ http {
 	    try_files /index.html =404;
 	}
 
-        location ~* ^.+\.(wav|ogg|mp3|txt|tar|rar|gz|zip)$ {
+        location ~* ^.+\.(wav|ogg|mp3|txt|tar|rar|gz|zip|jpg|png)$ {
             # check if a given URI exists locally first
             root /opt/local/files;
 	    # if it does, serve that instead of a webpage
