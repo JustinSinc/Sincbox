@@ -99,6 +99,10 @@ http {
             try_files $uri $uri/;
         }
 
+	location /thanks.html {
+            root /opt/local/files/thanks/;
+        }
+
         location / {
             # if not, redirect to my landing page at seednode.co/
             proxy_pass http://10.0.0.3:80/;
