@@ -122,7 +122,7 @@ http {
             # redirect to landing page
             proxy_pass http://208.110.227.11:1338/;
 
-            # Websocket support (from version 1.4)
+            # websocket support
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "Upgrade";
@@ -139,7 +139,7 @@ http {
             # redirect to alpine linux container demo
             proxy_pass http://208.110.227.11:1337/;
 
-            # Websocket support (from version 1.4)
+            # websocket support
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "Upgrade";
