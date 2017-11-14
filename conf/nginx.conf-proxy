@@ -20,7 +20,7 @@ http {
 
     # extend proxy timeout time to prevent issues with proxied websockets connections
     proxy_read_timeout 120s;
-    proxy_send_timeout 120s;
+    proxy_send_timeout 120s;    
 
     # tell nginx what sort of content we'll be displaying
     include       mime.types;
@@ -36,11 +36,12 @@ http {
 
     # listen for requests to https://seednode.co/ and its subdirectories
     server {
+	# listen on the https port
         listen       443;
-	
+
 	# disable gzip to prevent CRIME and other side-channel attacks
-        gzip off;
-	
+	gzip off;	
+
 	# this nginx vhost is only listening for connections to seednode.co
 	server_name  seednode.co;
 
@@ -55,38 +56,38 @@ http {
 	ssl_certificate /etc/letsencrypt/live/seednode.co/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/seednode.co/privkey.pem;
 	ssl_dhparam ssl/dhparam.pem;
-	
-	 # enable http public key pinning extension (hpkp)
-        add_header Public-Key-Pins 'pin-sha256="YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg="; pin-sha256="Cg2nS+yDEqJGTPoVwUjX66obkY4zkopMXOjtZ7yJR3g="; max-age=2592000; includeSubDomains';
 
-        # enable http strict transport security (hsts)
-        add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+	# enable http public key pinning extension (hpkp)
+	add_header Public-Key-Pins 'pin-sha256="YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg="; pin-sha256="Cg2nS+yDEqJGTPoVwUjX66obkY4zkopMXOjtZ7yJR3g="; max-age=2592000;';	
 	
+	# enable http strict transport security (hsts)
+	add_header Strict-Transport-Security "max-age=63072000; preload" always;
+
 	# disable insecure SSL implementations and ciphers
 	ssl_protocols TLSv1.2;
-        ssl_prefer_server_ciphers on;
-        ssl_ecdh_curve secp384r1;
-        ssl_ciphers 'AES256+EECDH:AES256+EDH:!aNULL';
+	ssl_prefer_server_ciphers on;
+	ssl_ecdh_curve secp384r1;
+	ssl_ciphers 'AES256+EECDH:AES256+EDH:!aNULL';
 
 	# disable ssl session tickets to ensure perfect forward secrecy
-        ssl_session_cache off;
+	ssl_session_cache shared:ssl_session_cache:10m;
 	ssl_session_timeout 1m;
-        ssl_session_tickets off;
+	ssl_session_tickets off;
 
-        # enable OSCP stapling
-        ssl_stapling on;
-        ssl_stapling_verify on;
-        resolver 8.8.8.8 8.8.4.4 valid=300s;
-        resolver_timeout 5s;
+	# enable OSCP stapling
+	ssl_stapling on;
+	ssl_stapling_verify on;
+	resolver 8.8.8.8 8.8.4.4 valid=300s;
+	resolver_timeout 5s;
 
-        # block clickjacking attacks
-        add_header X-Frame-Options DENY;
+	# block clickjacking attacks
+	add_header X-Frame-Options DENY;
 
-        # disable content-type sniffing
-        add_header X-Content-Type-Options nosniff;
+	# disable content-type sniffing
+	add_header X-Content-Type-Options nosniff;
 
-        # force-enable cross-site scripting protection
-        add_header X-XSS-Protection "1; mode=block";
+	# force-enable cross-site scripting protection
+	add_header X-XSS-Protection "1; mode=block";	
 
 	location = /index.html {
 	    # don't display the 'index.html' part of the URL
@@ -95,55 +96,67 @@ http {
 	    try_files /index.html =404;
 	}
 
-        location ~* ^.+\.(wav|ogg|mp3|txt|tar|rar|gz|zip|jpg|png)$ {
-            # check if a given URI exists locally first
-            root /opt/local/files;
+	location ~* ^.+\.(wav|ogg|mp3|txt|tar|rar|gz|zip)$ {
+	    # check if a given URI exists locally first
+	    root /opt/local/files;
 	    # if it does, serve that instead of a webpage
-            try_files $uri $uri/;
-        }
-
-	location /thanks.html {
-	    # when accessing the acknowledgements page, set the proper root directory
-            root /opt/local/files/thanks/;
-        }
+	    try_files $uri $uri/;
+	}
 
         location / {
-            # if not, redirect to my landing page at seednode.co/
-            proxy_pass http://10.0.0.3:80/;
-        }
-
+	    # if not, redirect to my landing page at seednode.co/
+	    proxy_pass http://10.0.0.3:80/;
+	}
+	
         location /watchme/ {
-            # disable proxy buffering
+	    # disable proxy buffering
             proxy_buffering off;
 
-            # disable caches
-            expires 0;
+	    # disable caches
+	    expires 0;
 
             # redirect to terminal live stream
             proxy_pass http://208.110.227.11:1338/;
 
-            # websocket support
+	    # websocket support
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "Upgrade";
-            proxy_set_header Host $http_host;
+	    proxy_set_header Host $http_host;
         }
 
-        location /tryme/ {
-            # disable proxy buffering
+	location /tryme/ {
+	    # disable proxy buffering
             proxy_buffering off;
 
-            # disable caches
+	    # disable caches
             expires 0;
 
-            # redirect to alpine linux container demo
-            proxy_pass http://208.110.227.11:1337/;
-
-            # websocket support
+	    # redirect to alpine linux container demo
+	    proxy_pass http://208.110.227.11:1337/;
+	    	
+	    # websocket support
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "Upgrade";
-            proxy_set_header Host $http_host;
-        }
+	    proxy_set_header Host $http_host;
+	}
+
+	location /staging/ {
+	    # disable proxy buffering
+	    proxy_buffering off;
+
+	    # disable caches
+	    expires 0;
+
+	    # redirect to test demo
+	    proxy_pass http://208.110.227.11:8085/;
+
+	    # websocket support
+	    proxy_http_version 1.1;
+	    proxy_set_header Upgrade $http_upgrade;
+	    proxy_set_header Connection "Upgrade";
+	    proxy_set_header Host $http_host;
+	}
     }
 }
