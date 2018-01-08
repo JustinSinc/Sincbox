@@ -2,6 +2,7 @@
 # a basic nginx config file for file hosting
 # requires nginx, php5-fpm, php5-cli, php5-cgi, wget
 # place _h5ai in /var/www/html/
+
 ##  example certbot command to generate dhparams and letsencrypt certs for this site
 # $ openssl dhparam -out /etc/nginx/ssl/dhparam.pem 4096
 # $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d cdn.justinsinkula.com -d cdn.shitposter.io -d seednode.co --must-staple --staple-oscp --hsts --uir --allow-subset-of-names --expand --agree-tos
