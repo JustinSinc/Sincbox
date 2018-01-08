@@ -5,7 +5,7 @@
 
 ##  example certbot command to generate dhparams and letsencrypt certs for this site
 # $ openssl dhparam -out /etc/nginx/ssl/dhparam.pem 4096
-# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d cdn.justinsinkula.com -d cdn.shitposter.io -d cdn.seednode.co --must-staple --hsts --uir --allow-subset-of-names --expand --agree-tos
+# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d cdn.justinsinkula.com -d cdn.shitposter.io -d cdn.seednode.co --must-staple --hsts --uir --agree-tos
 
 # run nginx as the www-data user
 user www-data;
