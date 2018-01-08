@@ -1,10 +1,12 @@
-# /etc/nginx/nginx.conf
+## /etc/nginx/nginx.conf
 # a basic nginx config file for file hosting
+# requires nginx, php5-fpm, php5-cli, php5-cgi, wget
+# place _h5ai in /var/www/html/
+##  example certbot command to generate dhparams and letsencrypt certs for this site
+# $ openssl dhparam -out /etc/nginx/ssl/dhparam.pem 4096
+# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d cdn.justinsinkula.com -d cdn.shitposter.$
 
-# example certbot command to generate letsencrypt certs for this site
-# sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d cdn.justinsinkula.com -d cdn.shitposter.io -d seednode.co --must-staple --staple-oscp --hsts --uir --allow-subset-of-names --expand --agree-tos
-
-# run nginx as user nobody
+# run nginx as the www-data user
 user www-data;
 worker_processes  2;
 
@@ -47,22 +49,19 @@ http {
         # strip .html extensions
         rewrite ^(/.+)/.html$ $scheme://$host$1 permanent;
 
-        # strip trailing slashes
-        rewrite ^/(.*)/$ /$1 permanent;
-
         # enable LetsEncrypt SSL certs
         ssl on;
         ssl_certificate /etc/letsencrypt/live/cdn.justinsinkula.com/fullchain.pem;
         ssl_certificate_key /etc/letsencrypt/live/cdn.justinsinkula.com/privkey.pem;
         ssl_dhparam ssl/dhparam.pem;
-
-        # disable insecure SSL implementations and ciphers
+		
+		# disable insecure SSL implementations and ciphers
         ssl_protocols TLSv1.2;
         ssl_prefer_server_ciphers on;
         ssl_ecdh_curve secp384r1;
         ssl_ciphers 'AES256+EECDH:AES256+EDH:!aNULL';
-		
-		# disable ssl session tickets to ensure perfect forward secrecy
+
+        # disable ssl session tickets to ensure perfect forward secrecy
         ssl_session_cache shared:ssl_session_cache:10m;
         ssl_session_timeout 1m;
         ssl_session_tickets off;
@@ -90,8 +89,8 @@ http {
 
         # error pages
         error_page 404 /custom_404.html;
-
-		location = /custom_404.html {
+		
+		 location = /custom_404.html {
                 internal;
         }
 
@@ -102,7 +101,7 @@ http {
         }
 
         # set index
-        index index.html index.htm;
+        index index.php index.html index.htm /_h5ai/public/index.php;
 
         # serve files located in /var/www/html
         location / {
@@ -110,8 +109,9 @@ http {
                 # as directory, then fall back to displaying a 404.
                 try_files $uri/index.html $uri.html $uri/ =404;
         }
-	        
-	location ~ \.php$ {
+
+        # php-fpm configuration
+        location ~ \.php$ {
                 fastcgi_pass unix:/var/run/php5-fpm.sock;
                 fastcgi_index index.php;
                 fastcgi_param SCRIPT_FILENAME $document_root/$fastcgi_script_name;
