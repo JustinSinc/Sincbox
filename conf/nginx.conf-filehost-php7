@@ -84,7 +84,7 @@ http {
         # force-enable cross-site scripting protection
         add_header X-XSS-Protection "1; mode=block";
 
-		# set root directory
+	# set root directory
         root /var/www/html;
 
         # error pages
