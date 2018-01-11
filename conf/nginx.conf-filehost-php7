@@ -1,10 +1,11 @@
+## /etc/nginx/nginx.conf
 # a basic nginx config file for file hosting
 # requires nginx, php7.0-fpm, php7.0-cli, php7.0-cgi, wget
-# place _h5ai in /var/www/html/
+# place _h5ai in /storage
 
 ##  example certbot command to generate dhparams and letsencrypt certs for this site
 # $ openssl dhparam -out /etc/nginx/ssl/dhparam.pem 4096
-# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d storage.justinsinkula.com -d storage.shitposter.io -d storage.seednode.co --must-staple --hsts --uir --agree-tos
+# $ sudo certbot certonly --webroot -w /storage --rsa-key-size 4096 -d storage.justinsinkula.com -d storage.shitposter.io -d storage.seednode.co --must-staple --hsts --uir --agree-tos
 
 # run nginx as the www-data user
 user www-data;
@@ -18,6 +19,22 @@ events {
 
 # configuration for the web server itself
 http {
+    # cache commonly requested files to ssd
+    proxy_cache_path /webcache levels=1:2 keys_zone=ssd_cache:10m inactive=1h max_size=100G use_temp_path=off;
+
+    # display cache hit rate in access logs
+    log_format '$remote_addr - $remote_user [$time_local]'
+               '"$request" $status $body_bytes_sent'
+               '"$http_referer" "$http_user_agent" "$upstream_cache_status"';
+
+    # set cache expiration times by content type
+    map $sent_http_content_type $expires {
+        default                    off;
+        text/html                  epoch;
+        text/css                   max;
+        application/javascript     max;
+        ~image/                    max;
+    }
 
     # extend proxy timeout time to prevent issues with proxied websockets connections
     proxy_read_timeout 120s;
@@ -26,7 +43,7 @@ http {
     # tell nginx what sort of content we'll be displaying
     include       mime.types;
     default_type  application/octet-stream;
-    sendfile        on;
+    sendfile      on;
 
     # redirect all non-HTTPS requests to HTTPS
     server {
@@ -42,9 +59,12 @@ http {
 
         # disable gzip to prevent CRIME and other side-channel attacks
         gzip off;
-
-        # this nginx vhost is listening for the cdn subdomain on all my domains
+		
+	# this nginx vhost is listening for the storage subdomain on all my domains
         server_name storage.justinsinkula.com storage.seednode.co storage.shitposter.io;
+
+        # set cache expiration times based on the mappings above
+        expires $expires;
 
         # strip .html extensions
         rewrite ^(/.+)/.html$ $scheme://$host$1 permanent;
@@ -69,7 +89,10 @@ http {
         # enable http strict transport security (hsts)
         add_header Strict-Transport-Security "max-age=63072000; preload" always;
 
-        # enable OSCP stapling
+        # send cache status header
+        add_header X-Cache-Status $upstream_cache_status;
+		
+	# enable OSCP stapling
         ssl_stapling on;
         ssl_stapling_verify on;
         resolver 8.8.8.8 8.8.4.4 valid=300s;
@@ -84,8 +107,8 @@ http {
         # force-enable cross-site scripting protection
         add_header X-XSS-Protection "1; mode=block";
 
-	# set root directory
-        root /var/www/html;
+        # set root directory
+        root /storage;
 
         # error pages
         error_page 404 /custom_404.html;
@@ -95,26 +118,42 @@ http {
         }
 
         error_page 500 502 503 504 /custom_50x.html;
-
-        location = /custom_50x.html {
+		
+		location = /custom_50x.html {
                 internal;
         }
 
         # set index
         index index.php index.html index.htm /_h5ai/public/index.php;
 
-        # serve files located in /var/www/html
+        # serve files located in /storage
         location / {
-				# require login credentials
+                # require login credentials
                 auth_basic "Restricted access";
                 auth_basic_user_file .htpasswd;
-				
+
+                # cache commonly-accessed files to ssd
+                proxy_cache ssd_cache;
+                proxy_ignore_headers Cache-Control;
+                proxy_cache_revalidate on;
+
+                # First attempt to serve request as file, then
+                # as a directory, then fall back to displaying a 404.
+                try_files $uri $uri/index.html $uri.html $uri/ =404;
+
+                # load from memcached if possible
+                memcached_pass 127.0.0.1:11211;
+                set            $memcached_key "$request_uri";
+                error_page 404 405 502 = @cache_miss;
+        }
+
+        location @cache_miss {
                 # First attempt to serve request as file, then
                 # as a directory, then fall back to displaying a 404.
                 try_files $uri $uri/index.html $uri.html $uri/ =404;
         }
-
-        # php-fpm configuration
+		
+	# php-fpm configuration
         location ~ \.php$ {
                 fastcgi_pass unix:/run/php/php7.0-fpm.sock;
                 fastcgi_index index.php;
