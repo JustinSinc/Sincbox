@@ -1,6 +1,6 @@
 ## /etc/nginx/nginx.conf
 # a basic nginx config file for file hosting
-# requires nginx, php5-fpm, php5-cli, php5-cgi, wget
+# requires nginx, php5-fpm, php5-cli, php5-cgi, php5-gd, zip, ffmpeg, imagemagick, wget
 # place _h5ai in /var/www/html/
 
 ##  example certbot command to generate dhparams and letsencrypt certs for this site
