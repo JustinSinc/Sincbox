@@ -1,6 +1,6 @@
 ## /etc/nginx/nginx.conf
 # a basic nginx config file for file hosting
-# requires nginx, php7.0-fpm, php7.0-cli, php7.0-cgi, wget
+# requires nginx, php7.0-fpm, php7.0-cli, php7.0-cgi, php7.0-gd, zip, ffmpeg, imagemagick, wget
 # place _h5ai in /storage
 
 ##  example certbot command to generate dhparams and letsencrypt certs for this site
