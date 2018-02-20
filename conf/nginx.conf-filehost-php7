@@ -3,6 +3,9 @@
 # requires nginx, php7.0-fpm, php7.0-cli, php7.0-cgi, php7.0-gd, zip, ffmpeg, imagemagick, wget
 # place _h5ai (https://larsjung.de/h5ai/) in /storage
 
+## append the following line to the bottom of /etc/php/7.0/fpm/pool.d/www.conf
+# php_admin_value[memory_limit] = 2G
+
 ##  example certbot command to generate dhparams and letsencrypt certs for this site
 # $ openssl dhparam -out /etc/nginx/ssl/dhparam.pem 4096
 # $ sudo certbot certonly --webroot -w /storage --rsa-key-size 4096 -d storage.justinsinkula.com -d storage.shitposter.io -d storage.seednode.co --must-staple --hsts --uir --agree-tos
@@ -145,6 +148,18 @@ http {
                 memcached_pass 127.0.0.1:11211;
                 set            $memcached_key "$request_uri";
                 error_page 404 405 502 = @cache_miss;
+        }
+	
+	location /comics/garfield/ {
+                # require login credentials
+                auth_basic "Restricted access";
+                auth_basic_user_file .htpasswd;
+        }
+
+        location /comics/calvinandhobbes/ {
+                # require login credentials
+                auth_basic "Restricted access";
+                auth_basic_user_file .htpasswd;
         }
 
         location @cache_miss {
