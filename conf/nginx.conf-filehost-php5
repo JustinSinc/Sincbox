@@ -114,13 +114,13 @@ http {
                 try_files $uri/index.html $uri.html $uri/ =404;
         }
 
-	location /comics/garfield/ {
+	location /comics/calvinandhobbes/ {
                 # require login credentials
                 auth_basic "Restricted access";
                 auth_basic_user_file .htpasswd;
         }
 
-        location /comics/calvinandhobbes/ {
+        location /comics/garfield/ {
                 # require login credentials
                 auth_basic "Restricted access";
                 auth_basic_user_file .htpasswd;
