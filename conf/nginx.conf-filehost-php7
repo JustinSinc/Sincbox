@@ -1,6 +1,6 @@
 ## /etc/nginx/nginx.conf
 # a basic nginx config file for file hosting
-# requires nginx, php7.0-fpm, php7.0-cli, php7.0-cgi, php7.0-gd, zip, ffmpeg, imagemagick, wget
+# requires nginx, php7.0-fpm, php7.0-cli, php7.0-cgi, php7.0-gd, zip, ffmpeg, imagemagick, wget, apache2-utils
 # place _h5ai (https://larsjung.de/h5ai/) in /storage
 
 ## append the following line to the bottom of /etc/php/7.0/fpm/pool.d/www.conf
