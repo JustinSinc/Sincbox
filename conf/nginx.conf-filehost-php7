@@ -62,7 +62,7 @@ http {
         # this nginx vhost is listening for the cdn subdomain on all my domains
         server_name  cdn.seednode.co cdn.justinsinkula.com cdn.shitposter.io;
 		
-		# set cache expiration times based on the mappings above
+	# set cache expiration times based on the mappings above
         expires $expires;
 
         # strip .html extensions
@@ -74,7 +74,7 @@ http {
         ssl_certificate_key /etc/letsencrypt/live/cdn.justinsinkula.com/privkey.pem;
         ssl_dhparam ssl/dhparam.pem;
 		
-		# disable insecure SSL implementations and ciphers
+	# disable insecure SSL implementations and ciphers
         ssl_protocols TLSv1.2;
         ssl_prefer_server_ciphers on;
         ssl_ecdh_curve secp384r1;
@@ -88,7 +88,7 @@ http {
         # enable http strict transport security (hsts)
         add_header Strict-Transport-Security "max-age=63072000; preload";
 
-		# send cache status header
+	# send cache status header
         add_header X-Cache-Status $upstream_cache_status;
 		
         # enable OSCP stapling
