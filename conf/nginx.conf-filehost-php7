@@ -171,6 +171,12 @@ http {
 			auth_basic_user_file .htpasswd;
 		}
 		
+		location /ebooks/ {
+                        # require login credentials
+                        auth_basic "Restricted access";
+                        auth_basic_user_file .htpasswd;
+                }
+
 		# serve files under different MIME types
 		location /nudes.png {
 			types {
@@ -181,12 +187,6 @@ http {
 		location /crawling.png {
 			types {
 				video/mp4 png;
-			}
-		}
-
-		location /robots.txt {
-			types {
-				video/mp4 txt;
 			}
 		}
 	}
