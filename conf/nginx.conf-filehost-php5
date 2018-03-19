@@ -59,7 +59,7 @@ http {
         ssl_certificate_key /etc/letsencrypt/live/cdn.justinsinkula.com/privkey.pem;
         ssl_dhparam ssl/dhparam.pem;
 		
-		# disable insecure SSL implementations and ciphers
+	# disable insecure SSL implementations and ciphers
         ssl_protocols TLSv1.2;
         ssl_prefer_server_ciphers on;
         ssl_ecdh_curve secp384r1;
