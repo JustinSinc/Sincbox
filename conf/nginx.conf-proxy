@@ -60,7 +60,7 @@ http {
         # enable http public key pinning extension (hpkp)
         add_header Public-Key-Pins 'pin-sha256="YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg="; pin-sha256="Cg2nS+yDEqJGTPoVwUjX66obkY4zkopMXOjtZ7yJR3g="; max-age=2592000;';
 		
-		# enable http strict transport security (hsts)
+	# enable http strict transport security (hsts)
         add_header Strict-Transport-Security "max-age=63072000; preload" always;
 
         # disable insecure SSL implementations and ciphers
