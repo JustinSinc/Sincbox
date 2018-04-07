@@ -96,13 +96,6 @@ http {
             try_files /index.html =404;
         }
 
-        location ~* ^.+\.(wav|ogg|mp3|txt|tar|rar|gz|zip)$ {
-            # check if a given URI exists locally first
-            root /opt/local/files;
-            # if it does, serve that instead of a webpage
-            try_files $uri $uri/;
-        }
-
         location / {
             # if not, redirect to my landing page at seednode.co/
             proxy_pass http://208.110.239.189:80/;
