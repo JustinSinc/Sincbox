@@ -143,9 +143,8 @@ http {
 				auth_basic "off";
         }
 
-		# serve files located in /storage
+	# serve files located in /storage
         location / {
-
                 # First attempt to serve request as file, then
                 # as a directory, then fall back to displaying a 404.
                 try_files $uri $uri/index.html $uri.html $uri/ =404;
@@ -162,7 +161,7 @@ http {
                 try_files $uri $uri/index.html $uri.html $uri/ =404;
         }
 		
-		# php-fpm configuration
+	# php-fpm configuration
         location ~ \.php$ {
                 fastcgi_pass unix:/run/php/php7.0-fpm.sock;
                 fastcgi_index index.php;
