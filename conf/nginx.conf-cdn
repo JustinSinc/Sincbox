@@ -87,9 +87,6 @@ http {
 
 		# enable http strict transport security (hsts)
 		add_header Strict-Transport-Security "max-age=63072000; preload";
-
-		# send cache status header
-		add_header X-Cache-Status $upstream_cache_status;
 		
 		# enable OSCP stapling
 		ssl_stapling on;
@@ -121,6 +118,12 @@ http {
 		location = /custom_50x.html {
 			internal;
 		}
+
+		# these file types are typically static and can be cached long-term
+                location ~* \.(?:jpg|jpeg|gif|png|ico|gz|svg|svgz|mp4|ogg|ogv|webm|pdf)$ {
+                    expires 30d;
+                add_header Cache-Control "public";
+                }
 
 		# set index
 		index index.php index.html index.htm /_h5ai/public/index.php;
