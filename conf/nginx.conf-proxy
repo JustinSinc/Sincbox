@@ -101,14 +101,6 @@ http {
             proxy_pass http://208.110.239.189:80/;
         }
 
-        location /chef/ {
-            proxy_pass https://mastrchef.rocks/;
-        }
-
-        location /chef-files/ {
-            proxy_pass https://files.mastrchef.rocks/;
-        }
-
         location /watchme/ {
             # disable proxy buffering
             proxy_buffering off;
