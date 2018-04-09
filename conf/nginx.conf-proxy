@@ -59,10 +59,7 @@ http {
         ssl_certificate /etc/letsencrypt/live/seednode.co/fullchain.pem;
         ssl_certificate_key /etc/letsencrypt/live/seednode.co/privkey.pem;
         ssl_dhparam ssl/dhparam.pem;
-
-        # enable http strict transport security (hsts)
-        add_header Strict-Transport-Security "max-age=63072000; preload" always;
-
+	
         # establish a new tls connection for upstream servers
         proxy_ssl_session_reuse off;
 
