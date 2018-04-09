@@ -5,6 +5,9 @@
 # designed to be run as an appliance with two network interfaces;
 # one WAN-facing and one on a LAN with the NATed hosts which it will be proxying towards
 
+# to regenerate ssl certs
+# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d seednode.co -d www.seednode.co --must-staple --hsts --uir --agree-tos
+
 # run nginx as user nobody
 user www-data;
 worker_processes  2;
