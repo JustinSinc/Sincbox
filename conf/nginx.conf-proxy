@@ -96,9 +96,23 @@ http {
             try_files /index.html =404;
         }
 
+	# these file types are typically static and can be cached long-term
+        location ~* \.(?:jpg|jpeg|gif|png|ico|gz|svg|svgz|mp4|ogg|ogv|webm|pdf)$ {
+            expires 30d;
+            add_header Cache-Control "public";
+        }
+
+	location /.well-known/ {
+            alias /var/www/html/.well-known/;
+        }
+
         location / {
             # if not, redirect to my landing page at seednode.co/
             proxy_pass http://208.110.239.189:80/;
+	    
+	    # this page is static and can be cached long-term
+            expires 30d;
+            add_header Cache-Control "public";
         }
 
         location /watchme/ {
