@@ -20,14 +20,14 @@ http {
                 error_page 404 /custom_404.html;
 
                 location = /custom_404.html {
-                        root /opt/local/html;
+                        root /var/www/html;
                         internal;
                 }
 
                 error_page 500 502 503 504 /custom_50x.html;
 
                 location = /custom_50x.html {
-                        root /opt/local/html;
+                        root /var/www/html;
                         internal;
                 }
 
