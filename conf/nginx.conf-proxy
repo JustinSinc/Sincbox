@@ -21,6 +21,9 @@ events {
 
 # configuration for the web server itself
 http {
+	# include upstream servers from file
+	include /etc/nginx/conf.d/upstream.conf;
+
 	# extend proxy timeout time to prevent issues with proxied websockets connections
 	proxy_read_timeout 120s;
 	proxy_send_timeout 120s;
@@ -29,37 +32,6 @@ http {
 	include mime.types;
 	default_type application/octet-stream;
 	sendfile on;
-
-	# upstream servers for net-data
-	upstream proxy {
-		server 127.0.0.1:19999;
-		keepalive 64;
-	}
-	upstream vpn {
-		server 208.110.239.222:19999;
-		keepalive 64;
-	}
-	upstream storage {
-		server 208.110.239.218:19999;
-		keepalive 64;
-	}
-	upstream landing {
-		server 10.0.0.4:19999;
-		keepalive 64;
-	}
-	upstream gate {
-		server 192.184.82.89:19999;
-		keepalive 64;
-	}
-    
-	upstream dreamland {
-		server 208.110.227.11:19999;
-		keepalive 64;
-	}
-	upstream cdn {
-		server 107.161.31.167:19999;
-		keepalive 64;
-	}
 
 	# redirect all non-HTTPS requests to HTTPS
 	server {
