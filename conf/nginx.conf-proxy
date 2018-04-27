@@ -14,7 +14,8 @@ user www-data;
 # set the number of workers
 worker_processes 2;
 
-# set the maximum number of simultaneous connections since this is a proxy server, this is set higher than default
+# set the maximum number of simultaneous connections
+# since this is a proxy server, this is set higher than default
 events {
 	worker_connections 2048;
 }
