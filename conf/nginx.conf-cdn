@@ -167,18 +167,5 @@ http {
 				text/plain sh bat yml xml;
 			}
 		}
-
-		# serve files under different MIME types
-		location /nudes.png {
-			types {
-				video/mp4 png;
-			}
-		}
-
-		location /crawling.png {
-			types {
-				video/mp4 png;
-			}
-		}
 	}
 }
