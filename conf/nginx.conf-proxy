@@ -47,13 +47,13 @@ http {
 	# listen for requests to https://seednode.co/ and its subdirectories
 	server {
 		# listen on the https port
-		listen	443 http2 default_server;
+		listen 443 http2 default_server;
 
 		# disable gzip to prevent CRIME and other side-channel attacks
 		gzip off;
 
 		# this nginx vhost is only listening for connections to seednode.co
-		server_name	seednode.co www.seednode.co;
+		server_name seednode.co www.seednode.co;
 
 		# strip .html extensions
 		rewrite ^(/.+)/.html$ $scheme://$host$1 permanent;
