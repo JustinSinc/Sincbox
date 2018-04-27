@@ -6,9 +6,15 @@ events {
 }
 
 http {
+        # limit simultaneous connections to protect against slowloris attacks
+        limit_conn_zone $binary_remote_addr zone=addr:10m;
+        limit_conn addr 64;
+
+        # serve content as raw bytes
         include mime.types;
         default_type application/octet-stream;
 
+        # allow serving files
         sendfile on;
         keepalive_timeout 65;
 
