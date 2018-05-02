@@ -9,7 +9,7 @@
 # $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d seednode.co -d www.seednode.co --hsts --uir --agree-tos --redirect
 
 # run nginx as user www-data
-user www-data; 
+user www-data;
 
 # set the number of workers
 worker_processes 2;
@@ -94,12 +94,16 @@ http {
 		# force-enable cross-site scripting protection
 		add_header X-XSS-Protection "1; mode=block";
 
+		# serve files locally
+		root /var/www/html/;
+		try_files $uri $uri/;
+
 		# these file types are typically static and can be cached long-term
 		location ~* \.(?:jpg|jpeg|gif|png|ico|gz|svg|svgz|mp4|ogg|ogv|webm|pdf)$ {
 			expires 30d;
 			add_header Cache-Control "public";
 		}
-		
+
 		location = /index.html {
 			# don't display the 'index.html' part of the URL
 			rewrite ^ / permanent;
@@ -108,7 +112,7 @@ http {
 			try_files /index.html =404;
 		}
 
-		location ~* ^/(cpu|disk|net).html$ {
+		location ~* ^/(cpu|disk|net|nginx).html$ {
 			# load these files locally, not from landing
 			root /var/www/html;
 
@@ -135,37 +139,19 @@ http {
 		}
 
 		location /watchme/ {
-			# disable proxy buffering
-			proxy_buffering off;
-
-			# disable caches
-			expires 0;
-
 			# redirect to terminal live stream
 			proxy_pass http://208.110.227.11:1338/;
 
 			# websocket support
-			proxy_http_version 1.1;
-			proxy_set_header Upgrade $http_upgrade;
-			proxy_set_header Connection "Upgrade";
-			proxy_set_header Host $http_host;
+			include conf.d/ws.conf;
 		}
 
 		location /tryme/ {
-			# disable proxy buffering
-			proxy_buffering off;
-
-			# disable caches
-			expires 0;
-
 			# redirect to docker container demo
 			proxy_pass http://208.110.227.11:1337/;
 
 			# websocket support
-			proxy_http_version 1.1;
-			proxy_set_header Upgrade $http_upgrade;
-			proxy_set_header Connection "Upgrade";
-			proxy_set_header Host $http_host;
+			include conf.d/ws.conf;
 		}
 
 		location /logs/ {
@@ -180,22 +166,16 @@ http {
 			rewrite ^/logs/(.*)$ /$1 break;
 
 			# websocket support
-			proxy_http_version 1.1;
-			proxy_set_header Upgrade $http_upgrade;
-			proxy_set_header Connection 'upgrade';
-			proxy_set_header Host $host;
-			proxy_cache_bypass $http_upgrade;
+			include conf.d/ws.conf;
 		}
+		
+		location ^~ /paste/ {
+			# rewrite path to strip /paste/
+			rewrite /paste/(.*) /$1 break;
 
-                location ^~ /paste/ {
-                        # rewrite path to strip /paste/
-                        rewrite /paste/(.*) /$1 break;
-
-                        # pass requests to hastebin
-                        proxy_buffering off;
-                        proxy_pass http://10.0.0.6:7777/;
-                        proxy_redirect default;
-                }
+			# pass requests to hastebin
+			proxy_pass http://10.0.0.6:7777/;
+		}
 
 		location ~ /stats/(?<behost>.*)/(?<ndpath>.*) {
 			# support for proxied netdata
