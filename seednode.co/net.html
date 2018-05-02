@@ -1,24 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>IPv4 traffic on seednode.co</title>
-    <meta name="application-name" content="netdata">
+	<title>IPv4 traffic on seednode.co</title>
+	<meta name="application-name" content="netdata">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:image" content="https://cloud.githubusercontent.com/assets/2662304/22945737/e98cd0c6-f2fd-11e6-96f1-5501934b0955.png"/>
-    <meta property="og:url" content="http://seednode.co/stats/"/>
-    <meta property="og:type" content="website"/>
-    <meta property="og:site_name" content="netdata"/>
-    <meta property="og:title" content="Netdata graphs for seednode.co"/>
-    <meta property="og:description" content="Stunning real-time dashboards, blazingly fast and extremely interactive. Zero configuration, zero dependencies, zero maintenance." />
-    
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:image" content="https://cloud.githubusercontent.com/assets/2662304/22945737/e98cd0c6-f2fd-11e6-96f1-5501934b0955.png"/>
+	<meta property="og:url" content="http://seednode.co/stats/"/>
+	<meta property="og:type" content="website"/>
+	<meta property="og:site_name" content="netdata"/>
+	<meta property="og:title" content="Netdata graphs for seednode.co"/>
+	<meta property="og:description" content="Stunning real-time dashboards, blazingly fast and extremely interactive. Zero configuration, zero dependencies, zero maintenance." /> 
 </head>
 
 <script>
@@ -38,7 +36,7 @@ NETDATA.options.current.parallel_refresher = true;
 
 var RELOAD_EVERY = 5;
 setTimeout(function(){
-    location.reload();
+	location.reload();
 }, RELOAD_EVERY * 60 * 1000);
 </script>
 
@@ -46,71 +44,88 @@ setTimeout(function(){
 
 <div style="width: 100%; text-align: center; display: inline-block;">
 	<div style="width: 100%; height: 24vh; text-align: center; display: inline-block;">
-        <div style="width: 100%; height: 15px; text-align: center; display: inline-block;">
-            <b>IPv4 traffic</b>
-        </div>
-        <div style="width: 100%; height: calc(100% - 15px); text-align: center; display: inline-block;">
-            <div data-netdata="system.ipv4"
-                    data-title="Proxy"
-                    data-common-max="traffic"
-                    data-common-min="traffic"
-                    data-chart-library="dygraph"
-                    data-width="49%"
-                    data-height="100%"
-                    data-after="-300"
-                    ></div>
+		<div style="width: 100%; height: 15px; text-align: center; display: inline-block;">
+			<b>IPv4 traffic</b>
+		</div>
+		<div style="width: 100%; height: calc(100% - 15px); text-align: center; display: inline-block;">
 			<div data-netdata="system.ipv4"
-                    data-host="https://seednode.co/stats/gate/"
-                    data-common-max="traffic"
-                    data-common-min="traffic"
-                    data-title="Gate"
-                    data-chart-library="dygraph"
-                    data-width="49%"
-                    data-height="100%"
-                    data-after="-300"
-                    ></div>
+				data-title="Proxy"
+				data-common-max="traffic"
+				data-common-min="traffic"
+				data-append-options="absolute"
+				data-chart-library="dygraph"
+				data-width="49%"
+				data-height="100%"
+				data-after="-300"
+				></div>
 			<div data-netdata="system.ipv4"
-                    data-host="https://seednode.co/stats/cdn/"
-                    data-common-max="traffic"
-                    data-common-min="traffic"
-                    data-title="CDN"
-                    data-chart-library="dygraph"
-                    data-width="49%"
-                    data-height="100%"
-                    data-after="-300"
-                    ></div>
+				data-host="https://seednode.co/stats/gate/"
+				data-common-max="traffic"
+				data-common-min="traffic"
+				data-append-options="absolute"
+				data-title="Gate"
+				data-chart-library="dygraph"
+				data-width="49%"
+				data-height="100%"
+				data-after="-300"
+				></div>
 			<div data-netdata="system.ipv4"
-                    data-host="https://seednode.co/stats/storage/"
-                    data-common-max="traffic"
-                    data-common-min="traffic"
-                    data-title="Storage"
-                    data-chart-library="dygraph"
-                    data-width="49%"
-                    data-height="100%"
-                    data-after="-300"
-                    ></div>
+				data-host="https://seednode.co/stats/cdn/"
+				data-common-max="traffic"
+				data-common-min="traffic"
+				data-append-options="absolute"
+				data-title="CDN"
+				data-chart-library="dygraph"
+				data-width="49%"
+				data-height="100%"
+				data-after="-300"
+				></div>
 			<div data-netdata="system.ipv4"
-                    data-host="https://seednode.co/stats/landing/"
-                    data-common-max="traffic"
-                    data-common-min="traffic"
-                    data-title="Landing"
-                    data-chart-library="dygraph"
-                    data-width="49%"
-                    data-height="100%"
-                    data-after="-300"
-                    ></div>
+				data-host="https://seednode.co/stats/storage/"
+				data-common-max="traffic"
+				data-common-min="traffic"
+				data-append-options="absolute"
+				data-title="Storage"
+				data-chart-library="dygraph"
+				data-width="49%"
+				data-height="100%"
+				data-after="-300"
+				></div>
 			<div data-netdata="system.ipv4"
-                    data-host="https://seednode.co/stats/vpn/"
-                    data-common-max="traffic"
-                    data-common-min="traffic"
-                    data-title="VPN"
-                    data-chart-library="dygraph"
-                    data-width="49%"
-                    data-height="100%"
-                    data-after="-300"
-                    ></div>
-        </div>
-    </div>
+				data-host="https://seednode.co/stats/landing/"
+				data-common-max="traffic"
+				data-common-min="traffic"
+				data-append-options="absolute"
+				data-title="Landing"
+				data-chart-library="dygraph"
+				data-width="49%"
+				data-height="100%"
+				data-after="-300"
+				></div>
+			<div data-netdata="system.ipv4"
+				data-host="https://seednode.co/stats/vpn/"
+				data-common-max="traffic"
+				data-common-min="traffic"
+				data-append-options="absolute"
+				data-title="VPN"
+				data-chart-library="dygraph"
+				data-width="49%"
+				data-height="100%"
+				data-after="-300"
+				></div>
+                        <div data-netdata="system.ipv4"
+                                data-host="https://seednode.co/stats/hastebin/"
+                                data-common-max="traffic"
+                                data-common-min="traffic"
+                                data-append-options="absolute"
+                                data-title="Hastebin"
+                                data-chart-library="dygraph"
+                                data-width="49%"
+                                data-height="100%"
+                                data-after="-300"
+                                ></div>
+		</div>
+	</div>
 </div>
 </body>
-</html>
+</html>	
