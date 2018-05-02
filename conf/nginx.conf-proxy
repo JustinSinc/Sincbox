@@ -187,6 +187,16 @@ http {
 			proxy_cache_bypass $http_upgrade;
 		}
 
+                location ^~ /paste/ {
+                        # rewrite path to strip /paste/
+                        rewrite /paste/(.*) /$1 break;
+
+                        # pass requests to hastebin
+                        proxy_buffering off;
+                        proxy_pass http://10.0.0.6:7777/;
+                        proxy_redirect default;
+                }
+
 		location ~ /stats/(?<behost>.*)/(?<ndpath>.*) {
 			# support for proxied netdata
 			proxy_set_header X-Forwarded-Host $host;
