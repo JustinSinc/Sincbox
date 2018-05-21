@@ -94,6 +94,9 @@ index 73ea26f..da10cb2 100644
    }
 EOF
 
+# Patch boringSSL to report version as OpenSSL 1.1.1
+sed -i 's/OpenSSL 1\.[0-9]\.[0-9]/OpenSSL 1.1.1/' "$BUILDROOT/boringssl/include/openssl/crypto.h"
+
 # Build OpenSSL
 mkdir build 
 cd $BUILDROOT/boringssl/build
