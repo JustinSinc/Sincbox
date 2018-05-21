@@ -123,10 +123,10 @@ http {
 		}
 
 		# these file types are typically static and can be cached long-term
-	        location ~* \.(?:jpg|jpeg|gif|png|ico|gz|svg|svgz|mp4|ogg|ogv|webm|pdf)$ {
-        	    expires 30d;
-            	add_header Cache-Control "public";
-        	}
+		location ~* \.(?:jpg|jpeg|gif|png|ico|gz|svg|svgz|mp4|ogg|ogv|webm|pdf)$ {
+			expires 30d;
+			add_header Cache-Control "public";
+		}
 
 		# set index
 		index index.php index.html index.htm /_h5ai/public/index.php;
