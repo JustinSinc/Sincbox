@@ -78,7 +78,7 @@ http {
 		ssl_dhparam ssl/dhparam.pem;
 		
 		# disable insecure SSL implementations and ciphers
-		ssl_protocols TLSv1.2;
+		ssl_protocols TLSv1.2 TLSv1.3;
 		ssl_prefer_server_ciphers on;
 		ssl_ecdh_curve secp384r1;
 		ssl_ciphers 'AES256+EECDH:AES256+EDH:!aNULL';
@@ -90,12 +90,6 @@ http {
 
 		# enable http strict transport security (hsts)
 		add_header Strict-Transport-Security "max-age=63072000; preload; includeSubDomains";
-		
-		# enable OSCP stapling
-		#ssl_stapling on;
-		#ssl_stapling_verify on;
-		#resolver 8.8.8.8 8.8.4.4 valid=300s;
-		#resolver_timeout 5s;
 
 		# block clickjacking attacks
 		add_header X-Frame-Options DENY;
@@ -161,11 +155,24 @@ http {
 			index /z/_h5ai/public/index.php;
 		}
 
+		location ~ /garfield(/)? {
+			# redirect to the comics page
+			return 301 /z/comics/garfield/index.php;
+		}
+
+		location ~ /calvinandhobbes(/)? {
+			# redirect to the comics page
+			return 301 /z/comics/calvinandhobbes/index.php;
+		}
+
+		location ~ /onepiece(/)? {
+			# redirect to the comics page
+			return 301 /z/comics/onepiece/index.php;
+		}
+
 		# serve all files in /txt/ as plain text
 		location /txt/ {
-			types {
-				text/plain sh bat yml xml;
-			}
-		}
+			default_type text/plain;
+                }
 	}
 }
