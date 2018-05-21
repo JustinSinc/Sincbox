@@ -1,38 +1,46 @@
-# /etc/nginx/nginx.conf 
-# a basic nginx config file to redirect requests to ports 
-# for use on Sinc's container hosting service 
-
-# designed to be run as an appliance with two network interfaces; one WAN-facing and one on a LAN with the NATed hosts which it will be proxying towards 
+## /etc/nginx/nginx.conf
+# a basic nginx config file for file hosting
+# requires nginx, php7.0-fpm, php7.0-cli, php7.0-cgi, wget
+# place _h5ai in /var/www/html/
 
 ##  example certbot command to generate dhparams and letsencrypt certs for this site
-# $ openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
-# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d seednode.co -d www.seednode.co --hsts --uir --agree-tos --redirect
+# $ openssl dhparam -out /etc/nginx/ssl/dhparam.pem 4096
+# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d cdn.justinsinkula.com -d cdn.shitposter.io -d cdn.seednode.co --must-staple --hsts --uir --agree-tos
 
-# run nginx as user www-data
+# run nginx as the www-data user
 user www-data;
-
-# set the number of workers
-worker_processes 2;
+worker_processes  2;
 
 # set the maximum number of simultaneous connections
 # since this is a proxy server, this is set higher than default
 events {
-	worker_connections 2048;
+	worker_connections  2048;
 }
 
 # configuration for the web server itself
 http {
-        # limit simultaneous connections to protect against slowloris attacks
-        limit_conn_zone $binary_remote_addr zone=addr:10m;
-        limit_conn addr 64;
+	# limit simultaneous connections to protect against slowloris attacks
+	limit_conn_zone $binary_remote_addr zone=addr:10m;
+	limit_conn addr 64;
 
-	# include upstream servers from file
-	include /etc/nginx/conf.d/upstream.conf;
+	# display cache hit rate in access logs
+	log_format	'$remote_addr [$time_local]'
+			'"$request" $status $body_bytes_sent'
+			'"$http_referer" "$http_user_agent"';
+
+	# set cache expiration times by content type
+	map $sent_http_content_type $expires {
+		default off;
+		text/html epoch;
+		text/css max;
+		application/javascript max;
+		~image/ max;
+	}
 
 	# extend proxy timeout time to prevent issues with proxied websockets connections
 	proxy_read_timeout 120s;
 	proxy_send_timeout 120s;
-
+	
 	# tell nginx what sort of content we'll be displaying
 	include mime.types;
 	default_type application/octet-stream;
@@ -41,166 +49,136 @@ http {
 	# redirect all non-HTTPS requests to HTTPS
 	server {
 		listen 80;
-		server_name seednode.co;
-		return 301 https://$host$request_uri;
+		server_name cdn.seednode.co cdn.justinsinkula.com cdn.shitposter.io;
+	return 301 https://$host$request_uri;
 	}
 
-	# listen for requests to https://seednode.co/ and its subdirectories
+	# listen for requests to https://cdn.seednode.co/ and its subdirectories
 	server {
-		# listen on the https port
-		listen 443 http2 default_server;
 
+		# listen on the https port
+		listen 443 ssl http2;
+		
 		# disable gzip to prevent CRIME and other side-channel attacks
 		gzip off;
 
-		# this nginx vhost is only listening for connections to seednode.co
-		server_name seednode.co www.seednode.co;
+		# this nginx vhost is listening for the cdn subdomain on all my domains
+		server_name cdn.seednode.co cdn.justinsinkula.com cdn.shitposter.io;
+
+		# set cache expiration times based on the mappings above
+		expires $expires;
 
 		# strip .html extensions
 		rewrite ^(/.+)/.html$ $scheme://$host$1 permanent;
 
-		# strip trailing /index.html
-		rewrite ^(.*)/index.html$ $1 permanent;
-
 		# enable LetsEncrypt SSL certs
 		ssl on;
-		ssl_certificate /etc/letsencrypt/live/seednode.co/fullchain.pem;
-		ssl_certificate_key /etc/letsencrypt/live/seednode.co/privkey.pem;
+		ssl_certificate /etc/letsencrypt/live/cdn.justinsinkula.com/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/cdn.justinsinkula.com/privkey.pem;
 		ssl_dhparam ssl/dhparam.pem;
-
-		# establish a new tls connection for upstream servers
-		proxy_ssl_session_reuse off;
-
+		
 		# disable insecure SSL implementations and ciphers
-		ssl_protocols TLSv1.2 TLSv1.3;
+		ssl_protocols TLSv1.2;
 		ssl_prefer_server_ciphers on;
 		ssl_ecdh_curve secp384r1;
 		ssl_ciphers 'AES256+EECDH:AES256+EDH:!aNULL';
 
 		# disable ssl session tickets to ensure perfect forward secrecy
 		ssl_session_cache shared:ssl_session_cache:10m;
-		ssl_session_timeout 10m;
+		ssl_session_timeout 1m;
 		ssl_session_tickets off;
 
 		# enable http strict transport security (hsts)
-		add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+		add_header Strict-Transport-Security "max-age=63072000; preload; includeSubDomains";
 		
+		# enable OSCP stapling
+		#ssl_stapling on;
+		#ssl_stapling_verify on;
+		#resolver 8.8.8.8 8.8.4.4 valid=300s;
+		#resolver_timeout 5s;
+
 		# block clickjacking attacks
 		add_header X-Frame-Options DENY;
-
+		
 		# disable content-type sniffing
 		add_header X-Content-Type-Options nosniff;
-
+		
 		# force-enable cross-site scripting protection
 		add_header X-XSS-Protection "1; mode=block";
+		
+		# set root directory
+		root /storage;
 
-		# serve files locally
-		root /var/www/html/;
-		try_files $uri $uri/;
+		# error pages
+		error_page 404 /custom_404.html;
+
+		location = /custom_404.html {
+			internal;
+		}
+
+		error_page 500 502 503 504 /custom_50x.html;
+
+		location = /custom_50x.html {
+			internal;
+		}
 
 		# these file types are typically static and can be cached long-term
-		location ~* \.(?:jpg|jpeg|gif|png|ico|gz|svg|svgz|mp4|ogg|ogv|webm|pdf)$ {
-			expires 30d;
-			add_header Cache-Control "public";
+	        location ~* \.(?:jpg|jpeg|gif|png|ico|gz|svg|svgz|mp4|ogg|ogv|webm|pdf)$ {
+        	    expires 30d;
+            	add_header Cache-Control "public";
+        	}
+
+		# set index
+		index index.php index.html index.htm /_h5ai/public/index.php;
+
+		# php-fpm configuration
+		location ~ \.php$ {
+			fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+			fastcgi_index index.php;
+			fastcgi_param SCRIPT_FILENAME $document_root/$fastcgi_script_name;
+			include fastcgi_params;
 		}
-
-		location = /index.html {
-			# don't display the 'index.html' part of the URL
-			rewrite ^ / permanent;
-            
-			# if no index exists, respond with a 404 error
-			try_files /index.html =404;
-		}
-
-		location ~* ^/(cpu|disk|net|nginx).html$ {
-			# load these files locally, not from landing
-			root /var/www/html;
-
-			# require user auth
-			auth_basic "Restricted access";
-			auth_basic_user_file /etc/nginx/htpasswd.stats;
-		}
-
-		# expose this directory for letsencrypt authentication
-		location /.well-known/ {
-			alias /var/www/html/.well-known/;
-		}
-
+		
+		# serve files located in /storage
 		location / {
-			# redirect to my landing page at seednode.co/
-			proxy_pass http://10.0.0.4:80/;
-	
-			# enable http strict transport security (hsts)
-			add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
-
-			# this page is static and can be cached long-term
-			expires 30d;
-			add_header Cache-Control "public";
+			# First attempt to serve request as file, then
+			# as directory, then fall back to displaying a 404.
+			try_files $uri $uri/index.html $uri.html $uri/ =404;
 		}
 
-		location /watchme/ {
-			# redirect to terminal live stream
-			proxy_pass http://208.110.227.11:1338/;
-
-			# websocket support
-			include conf.d/ws.conf;
+		# server status info for netdata
+		location /stub_status {
+			stub_status;
 		}
 
-		location /tryme/ {
-			# redirect to docker container demo
-			proxy_pass http://208.110.227.11:1337/;
-
-			# websocket support
-			include conf.d/ws.conf;
-		}
-
-		location /logs/ {
-			# require user auth
+		# require login credentials for specific directories
+		location /z/ {
+			# require login credentials
 			auth_basic "Restricted access";
-			auth_basic_user_file /etc/nginx/htpasswd.users;
-		
-			# pass requests on to the elk stack
-			proxy_pass http://10.0.0.5:5601/;
-
-			# rewrite path to strip /logs/
-			rewrite ^/logs/(.*)$ /$1 break;
-
-			# websocket support
-			include conf.d/ws.conf;
-		}
-		
-		location ^~ /paste/ {
-			# rewrite path to strip /paste/
-			rewrite /paste/(.*) /$1 break;
-
-			# pass requests to hastebin
-			proxy_pass http://10.0.0.6:7777/;
+			auth_basic_user_file .htpasswd;
+			
+			# serve a different h5ai instance
+			index /z/_h5ai/public/index.php;
 		}
 
-		location ~ /stats/(?<behost>.*)/(?<ndpath>.*) {
-			# support for proxied netdata
-			proxy_set_header X-Forwarded-Host $host;
-			proxy_set_header X-Forwarded-Server $host;
-			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-			proxy_http_version 1.1;
-			proxy_pass_request_headers on;
-			proxy_set_header Connection "keep-alive";
-			proxy_store off;
-			proxy_pass http://$behost/$ndpath$is_args$args;
-
-			# require user auth
-			auth_basic "Restricted access";
-			auth_basic_user_file /etc/nginx/htpasswd.stats;
-
-			# allow gzip for netdata
-			gzip on;
-			gzip_proxied any;
-			gzip_types *;
+		location ~ /garfield(/)? {
+			# redirect to the comics page
+			return 301 /z/comics/garfield/index.php;
 		}
 
-		location ~ /stats/(?<behost>.*) {
-			# trailing slash is required
-			return 301 /stats/$behost/;
+                location ~ /calvinandhobbes(/)? {
+                        # redirect to the comics page
+                        return 301 /z/comics/calvinandhobbes/index.php;
+                }
+
+                location ~ /onepiece(/)? {
+                        # redirect to the comics page
+                        return 301 /z/comics/onepiece/index.php;
+                }
+
+		# serve all files in /txt/ as plain text
+		location /txt/ {
+			default_type text/plain;
 		}
 	}
 }
