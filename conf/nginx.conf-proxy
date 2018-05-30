@@ -110,12 +110,12 @@ http {
 		location = /index.html {
 			# don't display the 'index.html' part of the URL
 			rewrite ^ / permanent;
-            
+			
 			# if no index exists, respond with a 404 error
 			try_files /index.html =404;
 		}
 
-		location ~* ^/(cpu|disk|net|nginx).html$ {
+		location ~* ^/(cpu|disk|net|nginx).(html|conf)$ {
 			# load these files locally, not from landing
 			root /var/www/html;
 
@@ -171,10 +171,29 @@ http {
 			# websocket support
 			include conf.d/ws.conf;
 		}
+
+		location /gate/ {
+			# require user auth
+			auth_basic "Restricted access";
+			auth_basic_user_file /etc/nginx/htpasswd.me;
+
+			# pass requests on to the terminal gateway
+			proxy_pass http://10.0.0.8:80;
+
+			# websocket support
+			proxy_redirect off;
+			proxy_pass_header Server;
+			proxy_set_header Host $http_host;
+			proxy_set_header X-Real-IP $http_address;
+			proxy_set_header X-Scheme $scheme;
+			proxy_http_version 1.1;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection "upgrade";
+		}
 		
 		location ^~ /paste/ {
 			# rewrite path to strip /paste/
-			rewrite /paste/(.*) /$1 break;
+			rewrite ^/paste/(.*) /$1 break;
 
 			# pass requests to hastebin
 			proxy_pass http://10.0.0.6:7777/;
@@ -191,6 +210,7 @@ http {
 			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 			proxy_set_header X-Forwarded-Proto $scheme;
 			proxy_read_timeout 900;
+			include conf.d/ws.conf;
 		}
 
 		location ~ /stats/(?<behost>.*)/(?<ndpath>.*) {
