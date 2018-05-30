@@ -11,10 +11,11 @@
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 	<meta property="og:locale" content="en_US" />
-	<meta property="og:url" content="http://seednode.co/cpu.html"/>
+	<meta property="og:image" content="https://cloud.githubusercontent.com/assets/2662304/22945737/e98cd0c6-f2fd-11e6-96f1-5501934b0955.png"/>
+	<meta property="og:url" content="http://seednode.co/stats/"/>
 	<meta property="og:type" content="website"/>
 	<meta property="og:site_name" content="netdata"/>
-	<meta property="og:title" content="Netdata CPU usage graphs for seednode.co"/>
+	<meta property="og:title" content="Netdata graphs for seednode.co"/>
 	<meta property="og:description" content="Stunning real-time dashboards, blazingly fast and extremely interactive. Zero configuration, zero dependencies, zero maintenance." />
 </head>
 
@@ -49,7 +50,7 @@ setTimeout(function(){
 		</div>
 		<div style="width: 100%; height: calc(100% - 15px); text-align: center; display: inline-block;">
 			<br/>
-			<div data-netdata="system.cpu"
+			<div data-netdata="apps.cpu_system"
 				data-host="https://seednode.co/stats/proxy/"
 				data-title="Proxy"
 				data-chart-library="dygraph"
@@ -58,7 +59,7 @@ setTimeout(function(){
 				data-after="-300"
 				data-dygraph-valuerange="[0, 100]"
 				></div>
-			<div data-netdata="system.cpu"
+			<div data-netdata="apps.cpu_system"
 				data-host="https://seednode.co/stats/gate/"
 				data-title="Gate"
 				data-chart-library="dygraph"
@@ -67,7 +68,7 @@ setTimeout(function(){
 				data-after="-300"
 				data-dygraph-valuerange="[0, 100]"
 				></div>
-			<div data-netdata="system.cpu"
+			<div data-netdata="apps.cpu_system"
 				data-host="https://seednode.co/stats/cdn/"
 				data-title="CDN"
 				data-chart-library="dygraph"
@@ -76,7 +77,7 @@ setTimeout(function(){
 				data-after="-300"
 				data-dygraph-valuerange="[0, 100]"
 				></div>
-			<div data-netdata="system.cpu"
+			<div data-netdata="apps.cpu_system"
 				data-host="https://seednode.co/stats/storage/"
 				data-title="Storage"
 				data-chart-library="dygraph"
@@ -85,7 +86,7 @@ setTimeout(function(){
 				data-after="-300"
 				data-dygraph-valuerange="[0, 100]"
 				></div>
-			<div data-netdata="system.cpu"
+			<div data-netdata="apps.cpu_system"
 				data-host="https://seednode.co/stats/landing/"
 				data-title="Landing"
 				data-chart-library="dygraph"
@@ -94,7 +95,7 @@ setTimeout(function(){
 				data-after="-300"
 				data-dygraph-valuerange="[0, 100]"
 				></div>
-			<div data-netdata="system.cpu"
+			<div data-netdata="apps.cpu_system"
 				data-host="https://seednode.co/stats/vpn/"
 				data-title="VPN"
 				data-chart-library="dygraph"
@@ -103,15 +104,33 @@ setTimeout(function(){
 				data-after="-300"
 				data-dygraph-valuerange="[0, 100]"
 				></div>
-                        <div data-netdata="system.cpu"
-                                data-host="https://seednode.co/stats/hastebin/"
-                                data-title="Hastebin"
-                                data-chart-library="dygraph"
-                                data-width="49%"
-                                data-height="100%"
-                                data-after="-300"
-                                data-dygraph-valuerange="[0, 100]"
-                                ></div>
+			<div data-netdata="apps.cpu_system"
+				data-host="https://seednode.co/stats/hastebin/"
+				data-title="Hastebin"
+				data-chart-library="dygraph"
+				data-width="49%"
+				data-height="100%"
+				data-after="-300"
+				data-dygraph-valuerange="[0, 100]"
+				></div>
+			<div data-netdata="apps.cpu_system"
+				data-host="https://seednode.co/stats/blog/"
+				data-title="Blog"
+				data-chart-library="dygraph"
+				data-width="49%"
+				data-height="100%"
+				data-after="-300"
+				data-dygraph-valuerange="[0, 100]"
+				></div>
+			<div data-netdata="apps.cpu_system"
+				data-host="https://seednode.co/stats/mumble/"
+				data-title="Mumble"
+				data-chart-library="dygraph"
+				data-width="49%"
+				data-height="100%"
+				data-after="-300"
+				data-dygraph-valuerange="[0, 100]"
+				></div>
 		</div>
 	</div>
 </div>
