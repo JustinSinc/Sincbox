@@ -1,47 +1,54 @@
-user  www-data;
-worker_processes  1;
+user www-data;
+worker_processes 1;
 
 events {
-        worker_connections  1024;
+		worker_connections  1024;
 }
 
 http {
-        # limit simultaneous connections to protect against slowloris attacks
-        limit_conn_zone $binary_remote_addr zone=addr:10m;
-        limit_conn addr 64;
+		# limit simultaneous connections to protect against slowloris attacks
+		limit_conn_zone $binary_remote_addr zone=addr:10m;
+		limit_conn addr 64;
 
-        # serve content as raw bytes
-        include mime.types;
-        default_type application/octet-stream;
+		# serve content as raw bytes
+		include mime.types;
+		default_type application/octet-stream;
 
-        # allow serving files
-        sendfile on;
-        keepalive_timeout 65;
+		# allow serving files
+		sendfile on;
+		keepalive_timeout 65;
 
-        server {
-                listen 80;
-                server_name localhost;
+		server {
+				listen 80;
+				server_name localhost;
 
-                # error pages
-                error_page 404 /custom_404.html;
+				# error pages
+				error_page 502 /offline.html;
 
-                location = /custom_404.html {
-                        root /var/www/html;
-                        internal;
-                }
+				location = /offline.html {
+						root /var/www/html;
+						internal;
+				}
 
-                error_page 500 502 503 504 /custom_50x.html;
+				error_page 404 /404.html;
 
-                location = /custom_50x.html {
-                        root /var/www/html;
-                        internal;
-                }
+				location = /404.html {
+						root /var/www/html;
+						internal;
+				}
 
-                location / {
-                        root /var/www/html;
-                        index index.html index.htm;
-                        allow  10.0.0.10;
-                        deny all;
-                }
-        }
+				error_page 500 503 504 /50x.html;
+
+				location = /50x.html {
+						root /var/www/html;
+						internal;
+				}
+
+				location / {
+						root /var/www/html;
+						index index.html index.htm;
+						allow  10.0.0.10;
+						deny all;
+				}
+		}
 }
