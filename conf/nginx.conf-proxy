@@ -101,6 +101,28 @@ http {
 		root /var/www/html/;
 		try_files $uri $uri/;
 
+				# error pages
+				error_page 502 /offline.html;
+
+				location = /offline.html {
+						root /var/www/html;
+						internal;
+				}
+
+				error_page 404 /404.html;
+
+				location = /404.html {
+						root /var/www/html;
+						internal;
+				}
+
+				error_page 500 503 504 /50x.html;
+
+				location = /50x.html {
+						root /var/www/html;
+						internal;
+				}
+
 		# these file types are typically static and can be cached long-term
 		location ~* \.(?:jpg|jpeg|gif|png|ico|gz|svg|svgz|mp4|ogg|ogv|webm|pdf)$ {
 			expires 30d;
