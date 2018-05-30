@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>Disk I/O usage on seednode.co</title>
+	<title>Disk usage on seednode.co</title>
 	<meta name="application-name" content="netdata">
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta charset="utf-8">
@@ -45,24 +45,20 @@ setTimeout(function(){
 <div style="width: 100%; text-align: center; display: inline-block;">
 	<div style="width: 100%; height: 24vh; text-align: center; display: inline-block;">
 		<div style="width: 100%; height: 15px; text-align: center; display: inline-block;">
-			<b>Disk I/O</b>
+			<b>Disk Usage</b>
 		</div>
 		<div style="width: 100%; height: calc(100% - 15px); text-align: center; display: inline-block;">
-			<div data-netdata="system.io"
-				data-host="https://seednode.co/stats/storage/"
+			<div data-netdata="disk_space._""
+				data-host="https://seednode.co/stats/proxy/"
 				data-title="Proxy"
-				data-common-max="io"
-				data-common-min="io"
 				data-append-options="absolute"
 				data-chart-library="dygraph"
 				data-width="49%"
 				data-height="100%"
 				data-after="-300"
 				></div>
-			<div data-netdata="system.io"
+			<div data-netdata="disk_space._""
 				data-host="https://seednode.co/stats/storage/"
-				data-common-max="io"
-				data-common-min="io"
 				data-append-options="absolute"
 				data-title="Storage"
 				data-chart-library="dygraph"
@@ -70,10 +66,8 @@ setTimeout(function(){
 				data-height="100%"
 				data-after="-300"
 				></div>
-			<div data-netdata="system.io"
+			<div data-netdata="disk_space._""
 				data-host="https://seednode.co/stats/landing/"
-				data-common-max="io"
-				data-common-min="io"
 				data-append-options="absolute"
 				data-title="Landing"
 				data-chart-library="dygraph"
@@ -81,10 +75,8 @@ setTimeout(function(){
 				data-height="100%"
 				data-after="-300"
 				></div>
-			<div data-netdata="system.io"
+			<div data-netdata="disk_space._""
 				data-host="https://seednode.co/stats/vpn/"
-				data-common-max="io"
-				data-common-min="io"
 				data-append-options="absolute"
 				data-title="VPN"
 				data-chart-library="dygraph"
@@ -92,17 +84,33 @@ setTimeout(function(){
 				data-height="100%"
 				data-after="-300"
 				></div>
-                        <div data-netdata="system.io"
-                                data-host="https://seednode.co/stats/hastebin/"
-                                data-common-max="io"
-                                data-common-min="io"
+			<div data-netdata="disk_space._""
+				data-host="https://seednode.co/stats/hastebin/"
 				data-append-options="absolute"
-                                data-title="Hastebin"
-                                data-chart-library="dygraph"
-                                data-width="49%"
-                                data-height="100%"
-                                data-after="-300"
-                                ></div>
+				data-title="Hastebin"
+				data-chart-library="dygraph"
+				data-width="49%"
+				data-height="100%"
+				data-after="-300"
+				></div>
+			<div data-netdata="disk_space._""
+				data-host="https://seednode.co/stats/blog/"
+				data-append-options="absolute"
+				data-title="Blog"
+				data-chart-library="dygraph"
+				data-width="49%"
+				data-height="100%"
+				data-after="-300"
+				></div>
+			<div data-netdata="disk_space._"
+				data-host="https://seednode.co/stats/mumble/"
+				data-append-options="absolute"
+				data-title="Mumble"
+				data-chart-library="dygraph"
+				data-width="49%"
+				data-height="100%"
+				data-after="-300"
+				></div>
 		</div>
 	</div>
 </div>
