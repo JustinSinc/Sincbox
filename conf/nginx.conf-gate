@@ -1,0 +1,139 @@
+user www-data;
+worker_processes 4;
+pid /run/nginx.pid;
+
+events {
+	worker_connections 768;
+	multi_accept on;
+}
+
+http {
+	# limit simultaneous connections to protect against slowloris attacks
+	limit_conn_zone $binary_remote_addr zone=addr:10m;
+	limit_conn addr 64;
+
+	# required settings for SSL-enabled reverse proxies to support Websockets
+	proxy_set_header Upgrade $http_upgrade;
+	proxy_set_header Connection "upgrade";
+	proxy_set_header X-Real-IP $remote_addr;
+	proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+	proxy_set_header Host $http_host;
+	proxy_http_version 1.1;
+
+	# extend proxy timeout time to prevent issues with proxied websockets connections
+	proxy_read_timeout 120s;
+
+	# tell nginx what sort of content we'll be displaying
+	include mime.types;
+	default_type application/octet-stream;
+	sendfile on;
+
+	# redirect all non-HTTPS requests to HTTPS
+	server {
+		listen 80;
+		server_name a.shitposter.io shitposter.io justinsinkula.com;
+		return 301 https://$host$request_uri;
+	}
+
+	# listen for requests to https://shitposter.io/ and its subdirectories
+	server {
+		listen 443 ssl http2;
+
+		# disable gzip to prevent CRIME and other side-channel attacks
+		gzip off;
+	
+		# this nginx vhost is only listening for connections to shitposter.io
+		server_name  a.shitposter.io;
+	
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/justinsinkula.com/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/justinsinkula.com/privkey.pem;
+		ssl_dhparam ssl/dhparam.pem;
+
+		# enable http strict transport security (hsts)
+		add_header Strict-Transport-Security "max-age=63072000; preload" always;
+	
+		# disable insecure SSL implementations and ciphers
+		ssl_protocols TLSv1.2 TLSv1.3;
+		ssl_prefer_server_ciphers on;
+		ssl_ecdh_curve secp384r1;
+		ssl_ciphers 'AES256+EECDH:AES256+EDH:!aNULL';
+
+		# disable ssl session tickets to ensure perfect forward secrecy
+		ssl_session_cache shared:SSL:10m;
+		ssl_session_timeout 10m;
+		ssl_session_tickets off;
+
+		# enable OSCP stapling
+		ssl_stapling_verify on;
+		resolver 8.8.8.8 8.8.4.4 valid=300s;
+		resolver_timeout 5s;
+
+		# block clickjacking attacks
+		add_header X-Frame-Options DENY;
+		
+		# disable content-type sniffing
+		add_header X-Content-Type-Options nosniff;
+
+		# force-enable cross-site scripting protection
+		add_header X-XSS-Protection "1; mode=block";
+
+		location / {
+			root /var/www/html/shitposter.io;
+			index index.html;
+
+			# require login
+			auth_basic "Restricted access";
+			auth_basic_user_file /etc/nginx/.htpasswd;
+		}
+	}
+
+	# listen for requests to https://justinsinkula.com/ and its subdirectories
+	server {
+		listen 443 ssl http2;
+
+		# disable gzip to prevent CRIME and other side-channel attacks
+		gzip off;
+
+		# this nginx vhost is only listening for connections to shitposter.io
+		server_name justinsinkula.com shitposter.io;
+
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/justinsinkula.com/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/justinsinkula.com/privkey.pem;
+		ssl_dhparam ssl/dhparam.pem;
+
+		# enable http strict transport security (hsts)
+		add_header Strict-Transport-Security "max-age=63072000; preload" always;
+
+		# disable insecure SSL implementations and ciphers
+		ssl_protocols TLSv1.2 TLSv1.3;
+		ssl_prefer_server_ciphers on;
+		ssl_ecdh_curve secp384r1;
+		ssl_ciphers 'AES256+EECDH:AES256+EDH:!aNULL';
+
+		# disable ssl session tickets to ensure perfect forward secrecy
+		ssl_session_cache shared:SSL:10m;
+		ssl_session_timeout 10m;
+		ssl_session_tickets off;
+
+		# enable OSCP stapling
+		ssl_stapling_verify on;
+		resolver 8.8.8.8 8.8.4.4 valid=300s;
+		resolver_timeout 5s;
+
+		# block clickjacking attacks
+		add_header X-Frame-Options DENY;
+
+		# disable content-type sniffing
+		add_header X-Content-Type-Options nosniff;
+
+		# force-enable cross-site scripting protection
+		add_header X-XSS-Protection "1; mode=block";
+
+		location / {
+			root /var/www/html/justinsinkula.com;
+			index index.html;
+		}
+	}
+}
