@@ -34,18 +34,21 @@ http {
 		return 301 https://$host$request_uri;
 	}
 
+	# set the default index file
+	index index.html;
+
 	# listen for requests to https://a.shitposter.io/ and its subdirectories
 	server {
-		# this nginx vhost is only listening for connections to shitposter.io
+		# this nginx vhost is only listening for connections to a.shitposter.io
 		server_name  a.shitposter.io;
 
 		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
 
-		location / {
-			root /var/www/html/shitposter.io;
-			index index.html;
+		# set root directory
+		root /var/www/html/shitposter.io;
 
+		location / {
 			# require login
 			auth_basic "Restricted access";
 			auth_basic_user_file /etc/nginx/.htpasswd;
@@ -54,15 +57,13 @@ http {
 
 	# listen for requests to https://justinsinkula.com/ and its subdirectories
 	server {
-		# this nginx vhost is only listening for connections to shitposter.io
+		# this nginx vhost is listening for the other hostnames
 		server_name justinsinkula.com shitposter.io;
 
 		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
 		
-		location / {
-			root /var/www/html/justinsinkula.com;
-			index index.html;
-		}
+		# set root directory
+		root /var/www/html/justinsinkula.com;
 	}
 }
