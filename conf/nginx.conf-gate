@@ -29,53 +29,22 @@ http {
 	# redirect all non-HTTPS requests to HTTPS
 	server {
 		listen 80;
+		listen [::]:80;
 		server_name a.shitposter.io shitposter.io justinsinkula.com;
 		return 301 https://$host$request_uri;
 	}
 
 	# listen for requests to https://a.shitposter.io/ and its subdirectories
 	server {
-		listen 443 ssl http2;
-		listen [::]:443 ssl http2;
-
-		# disable gzip to prevent CRIME and other side-channel attacks
-		gzip off;
-	
 		# this nginx vhost is only listening for connections to shitposter.io
 		server_name  a.shitposter.io;
-	
-		# enable LetsEncrypt SSL certs
-		ssl_certificate /etc/letsencrypt/live/justinsinkula.com/fullchain.pem;
-		ssl_certificate_key /etc/letsencrypt/live/justinsinkula.com/privkey.pem;
-		ssl_dhparam ssl/dhparam.pem;
 
-		# enable http strict transport security (hsts)
-		add_header Strict-Transport-Security "max-age=63072000; preload" always;
-	
-		# disable insecure SSL implementations and ciphers
-		ssl_protocols TLSv1.2 TLSv1.3;
-		ssl_prefer_server_ciphers on;
-		ssl_ecdh_curve secp384r1;
-		ssl_ciphers 'AES256+EECDH:AES256+EDH:!aNULL';
-
-		# disable ssl session tickets to ensure perfect forward secrecy
-		ssl_session_cache shared:SSL:10m;
-		ssl_session_timeout 10m;
-		ssl_session_tickets off;
-
-		# block clickjacking attacks
-		add_header X-Frame-Options DENY;
-		
-		# disable content-type sniffing
-		add_header X-Content-Type-Options nosniff;
-
-		# force-enable cross-site scripting protection
-		add_header X-XSS-Protection "1; mode=block";
+		# include shared config
+		include /etc/nginx/conf.d/shared.conf;
 
 		location / {
 			root /var/www/html/shitposter.io;
 			index index.html;
-			try_files $uri /index.html;
 
 			# require login
 			auth_basic "Restricted access";
@@ -85,47 +54,15 @@ http {
 
 	# listen for requests to https://justinsinkula.com/ and its subdirectories
 	server {
-		listen 443 ssl http2;
-		listen [::]:443 ssl http2;
-
-		# disable gzip to prevent CRIME and other side-channel attacks
-		gzip off;
-
 		# this nginx vhost is only listening for connections to shitposter.io
 		server_name justinsinkula.com shitposter.io;
 
-		# enable LetsEncrypt SSL certs
-		ssl_certificate /etc/letsencrypt/live/justinsinkula.com/fullchain.pem;
-		ssl_certificate_key /etc/letsencrypt/live/justinsinkula.com/privkey.pem;
-		ssl_dhparam ssl/dhparam.pem;
-
-		# enable http strict transport security (hsts)
-		add_header Strict-Transport-Security "max-age=63072000; preload" always;
-
-		# disable insecure SSL implementations and ciphers
-		ssl_protocols TLSv1.2 TLSv1.3;
-		ssl_prefer_server_ciphers on;
-		ssl_ecdh_curve secp384r1;
-		ssl_ciphers 'AES256+EECDH:AES256+EDH:!aNULL';
-
-		# disable ssl session tickets to ensure perfect forward secrecy
-		ssl_session_cache shared:SSL:10m;
-		ssl_session_timeout 10m;
-		ssl_session_tickets off;
-
-		# block clickjacking attacks
-		add_header X-Frame-Options DENY;
-
-		# disable content-type sniffing
-		add_header X-Content-Type-Options nosniff;
-
-		# force-enable cross-site scripting protection
-		add_header X-XSS-Protection "1; mode=block";
-
+		# include shared config
+		include /etc/nginx/conf.d/shared.conf;
+		
 		location / {
 			root /var/www/html/justinsinkula.com;
 			index index.html;
-			try_files $uri /index.html;
 		}
 	}
 }
