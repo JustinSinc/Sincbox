@@ -33,7 +33,7 @@ http {
 		return 301 https://$host$request_uri;
 	}
 
-	# listen for requests to https://shitposter.io/ and its subdirectories
+	# listen for requests to https://a.shitposter.io/ and its subdirectories
 	server {
 		listen 443 ssl http2;
 
