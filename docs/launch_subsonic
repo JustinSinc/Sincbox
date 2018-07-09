@@ -1,1 +1,0 @@
-subsonic --context-path=/music --port=4080 --https-port=40443 --max-memory=1500
