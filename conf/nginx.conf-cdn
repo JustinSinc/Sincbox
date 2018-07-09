@@ -4,17 +4,16 @@
 # place _h5ai in /var/www/html/
 
 ##  example certbot command to generate dhparams and letsencrypt certs for this site
-# $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 4096
-# $ sudo certbot certonly --webroot -w /storage --rsa-key-size 4096 -d cdn.justinsinkula.com -d cdn.shitposter.io -d cdn.seednode.co --must-staple --hsts --uir --agree-tos
+# $ openssl dhparam -out /etc/nginx/ssl/dhparam.pem 4096
+# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d cdn.justinsinkula.com -d cdn.shitposter.io -d cdn.seednode.co --must-staple --hsts --uir --agree-tos
 
 # run nginx as the www-data user
 user www-data;
-worker_processes  2;
+worker_processes auto;
 
-# set the maximum number of simultaneous connections
-# since this is a proxy server, this is set higher than default
+# set the maximum number of simultaneous connections per worker
 events {
-	worker_connections  2048;
+	worker_connections 2048;
 }
 
 # configuration for the web server itself
@@ -61,10 +60,10 @@ http {
 		
 		# disable gzip to prevent CRIME and other side-channel attacks
 		gzip off;
-		
+
 		# this nginx vhost is listening for the cdn subdomain on all my domains
 		server_name cdn.seednode.co cdn.justinsinkula.com cdn.shitposter.io;
-		
+
 		# set cache expiration times based on the mappings above
 		expires $expires;
 
@@ -155,24 +154,14 @@ http {
 			index /z/_h5ai/public/index.php;
 		}
 
-		location ~ /garfield(/)? {
-			# redirect to the comics page
-			return 301 /z/comics/garfield/index.php;
-		}
-
-		location ~ /calvinandhobbes(/)? {
-			# redirect to the comics page
-			return 301 /z/comics/calvinandhobbes/index.php;
-		}
-
-		location ~ /onepiece(/)? {
-			# redirect to the comics page
-			return 301 /z/comics/onepiece/index.php;
-		}
-
 		# serve all files in /txt/ as plain text
 		location /txt/ {
 			default_type text/plain;
-                }
+		}
+
+		# append trailing slash to /pics/ if needed
+		location ~ /pics {
+			rewrite ^([^.\?]*[^/])$ $1/ permanent;
+		}
 	}
 }
