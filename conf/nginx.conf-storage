@@ -9,7 +9,7 @@
 
 # run nginx as the www-data user
 user www-data;
-worker_processes  2;
+worker_processes auto;
 
 # set the maximum number of simultaneous connections
 # since this is a proxy server, this is set higher than default
