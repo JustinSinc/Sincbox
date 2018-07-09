@@ -28,9 +28,9 @@ http {
 	proxy_cache_key "$scheme$request_method$host$request_uri";
 
 	# display cache hit rate in access logs
-	log_format		'$remote_addr - $remote_user [$time_local]'
-					'"$request" $status $body_bytes_sent'
-					'"$http_referer" "$http_user_agent" "$upstream_cache_status"';
+	log_format	'$remote_addr - $remote_user [$time_local]'
+			'"$request" $status $body_bytes_sent'
+			'"$http_referer" "$http_user_agent" "$upstream_cache_status"';
 
 	# set cache expiration times by content type
 	map $sent_http_content_type $expires {
