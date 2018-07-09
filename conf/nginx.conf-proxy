@@ -51,7 +51,7 @@ http {
 	# listen for requests to https://seednode.co/ and its subdirectories
 	server {
 		# listen on the https port
-		listen 443 http2 default_server;
+		listen 443 ssl http2;
 
 		# disable gzip to prevent CRIME and other side-channel attacks
 		gzip off;
