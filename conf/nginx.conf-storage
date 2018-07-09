@@ -102,12 +102,6 @@ http {
 		# report cache status
 		add_header X-Cache-Status $upstream_cache_status;
 
-		# enable OSCP stapling
-		ssl_stapling on;
-		ssl_stapling_verify on;
-		resolver 8.8.8.8 8.8.4.4 valid=300s;
-		resolver_timeout 5s;
-
 		# block clickjacking attacks
 		add_header X-Frame-Options DENY;
 
