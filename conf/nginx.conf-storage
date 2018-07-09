@@ -109,7 +109,7 @@ http {
         # block clickjacking attacks
         add_header X-Frame-Options DENY;
 		
-		# disable content-type sniffing
+	# disable content-type sniffing
         add_header X-Content-Type-Options nosniff;
 
         # force-enable cross-site scripting protection
@@ -148,18 +148,7 @@ http {
                 # First attempt to serve request as file, then
                 # as a directory, then fall back to displaying a 404.
                 try_files $uri $uri/index.html $uri.html $uri/ =404;
-
-                # load from memcached if possible
-                memcached_pass 127.0.0.1:11211;
-                set            $memcached_key "$request_uri";
-                error_page 404 405 502 = @cache_miss;
-        }
-
-        location @cache_miss {
-                # First attempt to serve request as file, then
-                # as a directory, then fall back to displaying a 404.
-                try_files $uri $uri/index.html $uri.html $uri/ =404;
-        }
+	}
 		
 	# php-fpm configuration
         location ~ \.php$ {
