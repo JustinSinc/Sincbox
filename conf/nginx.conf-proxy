@@ -22,6 +22,9 @@ events {
 
 # configuration for the web server itself
 http {
+	# use proxy errors instead of backend
+	proxy_intercept_errors on;
+
 	# increase maximum file size for high-res photos
 	client_max_body_size 10m;
 
