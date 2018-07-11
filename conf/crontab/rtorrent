@@ -1,0 +1,1 @@
+@reboot sudo -i -u sinc /usr/bin/tmux new-session -s rtorrent -n rtorrent -d rtorrent
