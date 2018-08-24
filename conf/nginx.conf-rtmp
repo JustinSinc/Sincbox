@@ -7,7 +7,7 @@
 
 ## directory layout assumes:
 # /var/www/html/stream.seednode.co as $root 
-# $root/scripts/ containing the following two files:
+# $root/scripts containing the following two files:
 #	- https://github.com/JustinSinc/Sincbox/blob/master/scripts/flowplayer.min.js
 #	- https://github.com/JustinSinc/Sincbox/blob/master/scripts/flowplayer.hlsjs.min.js
 # $root/hls (for storing the video stream and playlist files)
