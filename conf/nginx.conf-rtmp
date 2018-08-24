@@ -6,7 +6,7 @@
 # users should point their streaming client (i.e. obs) towards http://stream.seednode.co/live/
 
 ## directory layout assumes:
-# /var/www/html/stream.seednode.co as $root 
+# /var/www/html/stream.seednode.co as $root, containing https://github.com/JustinSinc/Sincbox/blob/master/seednode.co/index.html-rtmp as index.html
 # $root/scripts containing the following two files:
 #	- https://github.com/JustinSinc/Sincbox/blob/master/scripts/flowplayer.min.js
 #	- https://github.com/JustinSinc/Sincbox/blob/master/scripts/flowplayer.hlsjs.min.js
