@@ -3,6 +3,8 @@
 
 # designed for nginx-1.14.0 using the nginx-rtmp-module (https://github.com/arut/nginx-rtmp-module), should work on newer versions
 
+# users should point their streaming client (i.e. obs) towards http://stream.seednode.co/live/
+
 ## directory layout assumes:
 # /var/www/html/stream.seednode.co as $root 
 # $root/scripts/ containing the following two files:
