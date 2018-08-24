@@ -1,7 +1,7 @@
 # /etc/nginx/nginx.conf 
-# a basic nginx config file for offering rtmp streams
+# a basic nginx config file for broadcasting rtmp streams to a browser
 
-# designed for nginx-1.14.0 using the nginx-rtmp-module (https://github.com/arut/nginx-rtmp-module)
+# designed for nginx-1.14.0 using the nginx-rtmp-module (https://github.com/arut/nginx-rtmp-module), should work on newer versions
 
 ## directory layout assumes:
 # /var/www/html/stream.seednode.co as $root 
@@ -113,22 +113,30 @@ rtmp {
 	server {
 		# listen on the default rtmp port
 		listen 1935;
+		
 		# increase chunk size to reduce overhead
 		chunk_size 8192;
+		
 		# allow anyone to stream to the server
 		allow play all;
+		
 		# allow livestreaming via flowplayer
 		application live {
 			# broadcast a one-to-many stream
 			live on;
+			
 			# skip sending rtmp metadata
 			meta off;
+			
 			# enable http live streaming
 			hls on;
+			
 			# create a subdirectory of hls/ for each streamer
 			hls_nested on;
+			
 			# set the path for hls streams
 			hls_path /var/www/html/stream.seednode.co/hls;
+			
 			# minimize stream latency by streaming four one-second fragments at a time
 			hls_fragment 1;
 			hls_playlist_length 4;
