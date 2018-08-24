@@ -2,10 +2,7 @@
 # a basic nginx config file for broadcasting rtmp streams to a browser
 
 # requires the following packages:
-# nginx-full libnginx-mod-rtmp mysql-server php php-mysql
-
-# set up mysql with 
-# $ sudo mysql_secure_installation
+# nginx-full libnginx-mod-rtmp
 
 # designed for nginx-1.14.0 using the nginx-rtmp-module (https://github.com/arut/nginx-rtmp-module), should work on newer versions
 
@@ -96,14 +93,6 @@ http {
 		# set the root for nginx paths
 		root /var/www/html/stream.seednode.co;
 
-		location ~ \.php$ {
-			fastcgi_split_path_info ^(.+\.php)(/.+)$;
-			fastcgi_pass unix:/var/run/php-fpm.sock;
-			fastcgi_index index.php;
-			fastcgi_param SCRIPT_FILENAME $request_filename;
-			include fastcgi_params;
-                }
-
 		location /live {
 			# tell the server how to handle m3u8 playlists
 			types {
@@ -138,11 +127,7 @@ rtmp {
 		allow play all;
 		
 		# allow livestreaming via flowplayer
-		application live {
-			# require authentication
-			on_publish https://stream.seednode.co/auth.php;
-			notify_method get;
-		
+		application live {		
 			# broadcast a one-to-many stream
 			live on;
 			
