@@ -1,6 +1,9 @@
 # /etc/nginx/nginx.conf 
 # a basic nginx config file for broadcasting rtmp streams to a browser
 
+# requires the following packages:
+# nginx-full libnginx-mod-rtmp
+
 # designed for nginx-1.14.0 using the nginx-rtmp-module (https://github.com/arut/nginx-rtmp-module), should work on newer versions
 
 # users should point their streaming client (i.e. obs) towards http://stream.seednode.co/live/
