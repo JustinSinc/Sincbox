@@ -12,7 +12,7 @@ worker_processes auto;
 pid /run/nginx.pid;
 
 events {
-	worker_connections 768;
+worker_connections 768;
 }
 
 http {
@@ -39,7 +39,7 @@ http {
 	# listen for requests to https://a.shitposter.io/ and its subdirectories
 	server {
 		# this nginx vhost is only listening for connections to a.shitposter.io
-		server_name a.shitposter.io;
+		server_name  a.shitposter.io;
 
 		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
@@ -61,8 +61,20 @@ http {
 
 		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
-		
-		# set root directory
-		root /var/www/html/justinsinkula.com;
+
+		# display photos
+		location /pics/ {
+			root /var/www/html/justinsinkula.com;
+		}
+
+		# append trailing slash to /pics if needed
+		location /pics {
+			rewrite ^([^.\?]*[^/])$ $1/ permanent;
+		}
+
+		# pass all requests to https://seednode.co/
+		location / {
+			proxy_pass https://seednode.co/;
+		}
 	}
 }
