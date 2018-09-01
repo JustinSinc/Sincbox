@@ -1,16 +1,12 @@
 # run nginx as user www-data
 user www-data;
-
 # set the number of workers
 worker_processes auto;
-
 # set the maximum number of simultaneous connections
 events {
 	worker_connections 768;
 }
-
 # configuration for the web server itself
-
 http {
 	# limit simultaneous connections to protect against slowloris attacks
 	limit_conn_zone $binary_remote_addr zone=addr:10m;
@@ -26,7 +22,7 @@ http {
 	
 	# redirect all non-HTTPS requests to HTTPS
 	server {
-		listen 80 ;
+		listen 80;
 		server_name mine.seednode.co;
 		return 301 https://$host$request_uri;
 	}	
@@ -41,7 +37,6 @@ http {
 		
 		# this nginx vhost is only listening for connections to mine.seednode.co
 		server_name mine.seednode.co;
-
 		# enable LetsEncrypt SSL certs
 		ssl_certificate /etc/letsencrypt/live/mine.seednode.co/fullchain.pem;
 		ssl_certificate_key /etc/letsencrypt/live/mine.seednode.co/privkey.pem;
@@ -55,21 +50,17 @@ http {
 		ssl_prefer_server_ciphers on;
 		ssl_ecdh_curve secp384r1;
 		ssl_ciphers 'AES256+EECDH:AES256+EDH:!aNULL';
-
 		# disable ssl session tickets to ensure perfect forward secrecy
 		ssl_session_cache shared:ssl_session_cache:10m;
 		ssl_session_timeout 10m;
 		ssl_session_tickets off;
-
 		# enable http strict transport security (hsts)
 		add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
 		
 		# block clickjacking attacks
 		add_header X-Frame-Options DENY;
-
 		# disable content-type sniffing
 		add_header X-Content-Type-Options nosniff;
-
 		# force-enable cross-site scripting protection
 		add_header X-XSS-Protection "1; mode=block";
 		
@@ -77,25 +68,26 @@ http {
 			rewrite ^ https://mine.seednode.co/lounge/ permanent;
 		}
 		
-		location /parker/ {
-			rewrite ^/parker/(.*) /$1 break;
+		location /misfits/ {
+			auth_basic "Restricted access";
+			auth_basic_user_file /etc/nginx/.htpasswd-misfits;
+			rewrite ^/misfits/(.*) /$1 break;
 			proxy_set_header	X-Real-IP $remote_addr;
 			proxy_set_header	X-Forwarded-For $proxy_add_x_forwarded_for;
 			proxy_set_header	Host $http_host;
-			proxy_redirect		off;
+			proxy_redirect off;
 			proxy_read_timeout	6;
-			proxy_pass		http://127.0.0.1:10000;
+			proxy_pass http://127.0.0.1:10000;
 			break;
 		}
-
 		location /lounge/ {
-			rewrite ^/lounge/(.*) 	/$1 break;
-			proxy_pass				http://127.0.0.1:10001;
-			proxy_set_header		X-Real-IP $remote_addr;
-			proxy_set_header		X-Forwarded-For $proxy_add_x_forwarded_for;
-			proxy_set_header		Host $http_host;
-			proxy_redirect			off;
-			proxy_read_timeout		6;
+			rewrite ^/lounge/(.*) /$1 break;
+			proxy_pass http://127.0.0.1:10001;
+			proxy_set_header X-Real-IP $remote_addr;
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			proxy_set_header Host $http_host;
+			proxy_redirect off;
+			proxy_read_timeout 6;
 			break;
 		}
 	}
