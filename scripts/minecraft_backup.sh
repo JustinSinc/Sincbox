@@ -14,16 +14,16 @@ filename="$server_name"_"$(date +%Y%m%d_%H%M).tgz"
 echo "Backing up server to file "$filename"..."
 
 # back up server files
-tar --exclude="$HOME/$server_name/plugins/dynmap/web/tiles" -zcvf "$HOME"/"$filename" "$HOME"/"$server_name"
+tar --exclude=plugins/dynmap/web/tiles -zcvf "$HOME/$filename" -C "$HOME/$server_name" .
 
 # let the user know it finished
 echo "Backed up server to "$filename". Exiting..."
 
 # copy the file over to gate
-scp "$HOME"/"$filename" gate:
+scp "$HOME/$filename" gate:
 
 # copy the file from gate to the fallback server
-ssh gate "scp "$HOME"/"$filename" fallback:minecraft_misfits/nightly_"$(date +%Y%m%d)".tgz"
+ssh gate "scp "$HOME/$filename" fallback:minecraft_misfits/nightly_"$(date +%Y%m%d)".tgz"
 
 # delete the file from gate
-ssh gate "rm "$HOME"/"$filename""
+ssh gate "rm "$HOME/$filename""
