@@ -23,7 +23,7 @@ echo "Backed up server to "$filename". Exiting..."
 scp "$HOME/$filename" gate:
 
 # copy the file from gate to the fallback server
-ssh gate "scp "$HOME/$filename" fallback:minecraft_misfits/nightly_"$(date +%Y%m%d)".tgz"
+ssh gate "scp "$HOME/$filename" fallback:minecraft_misfits/nightly_"$(date +%Y%m%d_%H%M)".tgz"
 
 # delete the file from gate
 ssh gate "rm "$HOME/$filename""
