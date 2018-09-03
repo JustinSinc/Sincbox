@@ -18,3 +18,12 @@ tar --exclude="$HOME/$server_name/plugins/dynmap/web/tiles" -zcvf "$HOME"/"$file
 
 # let the user know it finished
 echo "Backed up server to "$filename". Exiting..."
+
+# copy the file over to gate
+scp "$HOME"/"$filename" gate:
+
+# copy the file from gate to the fallback server
+ssh gate "scp "$HOME"/"$filename" fallback:minecraft_misfits/nightly_"$(date +%Y%m%d)".tgz"
+
+# delete the file from gate
+ssh gate "rm "$HOME"/"$filename""
