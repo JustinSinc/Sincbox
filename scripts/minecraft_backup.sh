@@ -18,7 +18,7 @@ echo "Backing up server to file "$new_filename"..."
 tar --exclude=plugins/dynmap/web/tiles -zcvf "$HOME/$new_filename" -C "$HOME/$server_name" .
 
 # let the user know it finished
-echo "Backed up server to "$filename". Exiting..."
+echo "Backed up server to "$new_filename". Exiting..."
 
 # copy the file over to gate
 scp "$HOME/$new_filename" gate:
