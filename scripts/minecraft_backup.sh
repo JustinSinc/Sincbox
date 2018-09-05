@@ -12,7 +12,7 @@ new_filename="nightly_"$(date +%Y%m%d_%H)05.tgz""
 old_filename="nightly_"$(date --date="yesterday" +%Y%m%d_%H)05.tgz""
 
 # display backup file name
-echo "Backing up server to file "$new_filename"..."
+echo "Backing up server to "$new_filename"..."
 
 # back up server files, skipping the bulky dynmap tilesets
 tar --exclude=plugins/dynmap/web/tiles -zcvf "$HOME/$new_filename" -C "$HOME/$server_name" .
