@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# a script to build nginx with boringssl on ubuntu and debian
+# a script to build nginx with openssl-dev on ubuntu and debian
 
 ## to build using a newer version of gcc, run the following two lines
 # $ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 700 --slave /usr/bin/g++ g++ /usr/bin/g++-7
