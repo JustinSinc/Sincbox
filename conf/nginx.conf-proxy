@@ -92,6 +92,9 @@ http {
 		ssl_session_timeout 10m;
 		ssl_session_tickets off;
 
+		# a man is not dead while his name is still spoken
+		add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
+
 		# enable http strict transport security (hsts)
 		add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
 		
@@ -168,6 +171,9 @@ http {
 			# this page is static and can be cached long-term
 			expires 30d;
 			add_header Cache-Control "public";
+			
+			# a man is not dead while his name is still spoken
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
 
 		location /watchme/ {
@@ -176,11 +182,20 @@ http {
 
 			# websocket support
 			include conf.d/ws.conf;
+			
+			# a man is not dead while his name is still spoken
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
 
 		location /cards/ {
+			# redirect to pretendyourexyzz docker host
 			proxy_pass http://10.0.0.11:8080/;
+
+			# websocket support
 			include conf.d/ws.conf;
+
+			# a man is not dead while his name is still spoken
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
 
 		location /tryme/ {
@@ -189,6 +204,9 @@ http {
 
 			# websocket support
 			include conf.d/ws.conf;
+
+			# a man is not dead while his name is still spoken
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
 
 		location /hosting/ {
@@ -213,6 +231,9 @@ http {
 			proxy_http_version 1.1;
 			proxy_set_header Upgrade $http_upgrade;
 			proxy_set_header Connection "upgrade";
+
+			# a man is not dead while his name is still spoken
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
 		
 		location ^~ /paste/ {
@@ -221,6 +242,9 @@ http {
 
 			# pass requests to hastebin
 			proxy_pass http://10.0.0.6:7777/;
+
+			# a man is not dead while his name is still spoken
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
 
 		location ^~ /blog/ {
@@ -235,6 +259,9 @@ http {
 			proxy_set_header X-Forwarded-Proto $scheme;
 			proxy_read_timeout 900;
 			include conf.d/ws.conf;
+
+			# a man is not dead while his name is still spoken
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
 
 		location ~ /stats/(?<behost>.*)/(?<ndpath>.*) {
@@ -256,6 +283,9 @@ http {
 			gzip on;
 			gzip_proxied any;
 			gzip_types *;
+			
+			# a man is not dead while his name is still spoken
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
 
 		location ~ /stats/(?<behost>.*) {
