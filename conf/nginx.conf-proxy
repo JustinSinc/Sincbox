@@ -8,10 +8,10 @@
 # $ openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
 # $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d seednode.co -d www.seednode.co --hsts --uir --agree-tos --redirect
 
-# run nginx as user www-data
+# run nginx as unprivileged user www-data
 user www-data; 
 
-# set the number of workers
+# set the number of workers equal to the cpu count
 worker_processes auto;
 
 # set the maximum number of simultaneous connections
@@ -25,7 +25,7 @@ http {
 	# use proxy errors instead of backend
 	proxy_intercept_errors on;
 
-	# increase maximum file size for high-res photos
+	# increase maximum file size for high-resolution photos
 	client_max_body_size 10m;
 
 	# limit simultaneous connections to protect against slowloris attacks
@@ -73,7 +73,7 @@ http {
 		ssl_certificate_key /etc/letsencrypt/live/seednode.co/privkey.pem;
 		ssl_dhparam ssl/dhparam.pem;
 
-		# establish a new tls connection for upstream servers
+		# establish a new TLS connection for upstream servers
 		proxy_ssl_session_reuse off;
 
 		# enable oscp stapling
@@ -92,10 +92,10 @@ http {
 		ssl_session_timeout 10m;
 		ssl_session_tickets off;
 
-		# a man is not dead while his name is still spoken
+		# honour the fallen
 		add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 
-		# enable http strict transport security (hsts)
+		# enable http strict transport security (HSTS)
 		add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
 		
 		# block clickjacking attacks
@@ -111,7 +111,9 @@ http {
 		root /var/www/html/;
 		try_files $uri $uri/;
 
-		# error pages
+		## error pages
+		# 502 Bad Gateway
+		# when a service goes offline
 		error_page 502 /offline.html;
 
 		location = /offline.html {
@@ -119,6 +121,8 @@ http {
 			internal;
 		}
 
+		# 404 Not Found 
+		# when a requested resource does not exist
 		error_page 404 /404.html;
 
 		location = /404.html {
@@ -126,6 +130,8 @@ http {
 			internal;
 		}
 
+		# 500 Internal Server Error
+		# when a server is not responding
 		error_page 500 503 504 /50x.html;
 
 		location = /50x.html {
@@ -140,7 +146,7 @@ http {
 		}
 
 		location = /index.html {
-			# don't display the 'index.html' part of the URL
+			# do not display the 'index.html' part of the URL
 			rewrite ^ / permanent;
 			
 			# if no index exists, respond with a 404 error
@@ -148,7 +154,7 @@ http {
 		}
 
 		location ~* ^/(cpu|disk|net|nginx).(html|conf)$ {
-			# load these files locally, not from landing
+			# load files matching this pattern locally, not from landing
 			root /var/www/html;
 
 			# require user auth
@@ -162,10 +168,10 @@ http {
 		}
 
 		location / {
-			# redirect to my landing page at seednode.co/
+			# redirect to my landing page at seednode.co
 			proxy_pass http://10.0.0.4:80/;
 	
-			# enable http strict transport security (hsts)
+			# enable http strict transport security
 			add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
 
 			# this page is static and can be cached long-term
@@ -180,9 +186,20 @@ http {
 			# redirect to terminal live stream
 			proxy_pass http://10.0.0.11:1338/;
 
-			# websocket support
-			include conf.d/ws.conf;
-			
+                        # websockets support
+                        proxy_http_version 1.1;
+                        proxy_set_header Upgrade $http_upgrade;
+                        proxy_set_header Connection "Upgrade";
+                        proxy_set_header Host $http_host;
+                        proxy_cache_bypass $http_upgrade;
+
+                        # disable proxy buffering
+                        proxy_buffering off;
+                        proxy_redirect default;
+
+                        # disable caches
+                        expires 0;
+	
 			# a man is not dead while his name is still spoken
 			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
@@ -191,8 +208,19 @@ http {
 			# redirect to pretendyourexyzz docker host
 			proxy_pass http://10.0.0.11:8080/;
 
-			# websocket support
-			include conf.d/ws.conf;
+			# websockets support
+			proxy_http_version 1.1;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection "Upgrade";
+			proxy_set_header Host $http_host;
+			proxy_cache_bypass $http_upgrade;
+
+			# disable proxy buffering
+			proxy_buffering off;
+			proxy_redirect default;
+
+			# disable caches
+			expires 0;
 
 			# a man is not dead while his name is still spoken
 			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
@@ -202,15 +230,26 @@ http {
 			# redirect to docker container demo
 			proxy_pass http://10.0.0.11:1337/;
 
-			# websocket support
-			include conf.d/ws.conf;
+                        # websockets support
+                        proxy_http_version 1.1;
+                        proxy_set_header Upgrade $http_upgrade;
+                        proxy_set_header Connection "Upgrade";
+                        proxy_set_header Host $http_host;
+                        proxy_cache_bypass $http_upgrade;
+
+                        # disable proxy buffering
+                        proxy_buffering off;
+                        proxy_redirect default;
+
+                        # disable caches
+                        expires 0;
 
 			# a man is not dead while his name is still spoken
 			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
 
 		location /hosting/ {
-			# don't display the 'index.html' part of the URL
+			# do not display the 'index.html' part of the URL
                         rewrite https://seednode.co/hosting.html redirect;
 		}
 
@@ -222,7 +261,7 @@ http {
 			# pass requests on to the terminal gateway
 			proxy_pass http://10.0.0.8:80;
 
-			# websocket support
+			# websockets support
 			proxy_redirect off;
 			proxy_pass_header Server;
 			proxy_set_header Host $http_host;
@@ -251,15 +290,22 @@ http {
 			# pass requests to ghost
 			proxy_pass http://10.0.0.7:80;
 
-			# websocket support
-			proxy_redirect off;
+			# websockets support
+			proxy_http_version 1.1;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection "Upgrade";
 			proxy_set_header Host $http_host;
+			proxy_cache_bypass $http_upgrade;
+			proxy_buffering off;
+			proxy_redirect off;
 			proxy_set_header X-Real-IP $remote_addr;
 			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 			proxy_set_header X-Forwarded-Proto $scheme;
 			proxy_read_timeout 900;
-			include conf.d/ws.conf;
 
+			# disable caches
+			expires 0;
+		
 			# a man is not dead while his name is still spoken
 			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
