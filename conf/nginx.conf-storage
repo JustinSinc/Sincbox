@@ -111,6 +111,9 @@ http {
 		# force-enable cross-site scripting protection
 		add_header X-XSS-Protection "1; mode=block";
 
+		# a man is not dead while his name is still spoken
+		add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
+	
 		# set root directory
 		root /storage;
 
