@@ -72,9 +72,9 @@ http {
 			rewrite ^([^.\?]*[^/])$ $1/ permanent;
 		}
 
-		# pass all requests to https://seednode.co/
+		# pass all other requests to https://seednode.co/
 		location / {
-			proxy_pass https://seednode.co/;
+			return 301 https://seednode.co$request_uri;
 		}
 	}
 }
