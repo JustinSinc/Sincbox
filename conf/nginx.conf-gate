@@ -47,6 +47,7 @@ http {
 		# set root directory
 		root /var/www/html/shitposter.io;
 
+		# expose this directory for letsencrypt authentication
 		location /.well-known/ {
 			alias /var/www/html/.well-known/;
 		}
@@ -66,6 +67,7 @@ http {
 		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
 
+		# expose this directory for letsencrypt authentication
 		location /.well-known/ {
 			alias /var/www/html/.well-known/;
 		}
