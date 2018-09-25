@@ -12,7 +12,7 @@ worker_processes auto;
 pid /run/nginx.pid;
 
 events {
-worker_connections 768;
+	worker_connections 768;
 }
 
 http {
@@ -47,6 +47,10 @@ http {
 		# set root directory
 		root /var/www/html/shitposter.io;
 
+		location /.well-known/ {
+			alias /var/www/html/.well-known/;
+		}
+
 		location / {
 			# require login
 			auth_basic "Restricted access";
@@ -62,19 +66,23 @@ http {
 		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
 
+		location /.well-known/ {
+			alias /var/www/html/.well-known/;
+		}
+
 		# display photos
 		location /pics/ {
 			root /var/www/html/justinsinkula.com;
 		}
 
-		# append trailing slash to /pics if needed
+		# append trailing slash to /pics/ if needed
 		location /pics {
 			rewrite ^([^.\?]*[^/])$ $1/ permanent;
 		}
 
 		# pass all other requests to https://seednode.co/
 		location / {
-			return 301 https://seednode.co$request_uri;
+			root /var/www/html/justinsinkula.com;
 		}
 	}
 }
