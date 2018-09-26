@@ -154,12 +154,17 @@ http {
 		}
 
 		location ~* ^/(cpu|disk|net|nginx).(html|conf)$ {
-			# load files matching this pattern locally, not from landing
+			# load files matching this pattern locally, not from landing - require password
 			root /var/www/html;
-
+			
 			# require user auth
 			auth_basic "Restricted access";
 			auth_basic_user_file /etc/nginx/htpasswd.stats;
+		}
+
+		location ~* ^/(zalgo).(html)$ {
+			# load files matching this pattern locally, not from landing - do not require password
+			root /var/www/html;
 		}
 
 		# expose this directory for letsencrypt authentication
@@ -177,7 +182,7 @@ http {
 			# this page is static and can be cached long-term
 			expires 30d;
 			add_header Cache-Control "public";
-			
+
 			# a man is not dead while his name is still spoken
 			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
@@ -246,11 +251,6 @@ http {
 
 			# a man is not dead while his name is still spoken
 			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
-		}
-
-		location /hosting/ {
-			# do not display the 'index.html' part of the URL
-                        rewrite https://seednode.co/hosting.html redirect;
 		}
 
 		location /gate/ {
