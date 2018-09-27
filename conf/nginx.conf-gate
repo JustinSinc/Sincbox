@@ -4,7 +4,7 @@
 
 ##  example certbot command to generate dhparams and letsencrypt certs for this site
 # $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 4096
-# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 2048 -d justinsinkula.com -d shitposter.io -d a.shitposter.io --hsts --uir --agree-tos
+# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 2048 -d justinsinkula.com -d shitposter.io -d a.shitposter.io -d znc.shitposter.io -d znc.justinsinkula.com --hsts --uir --agree-tos
 
 # run nginx as the www-data user
 user www-data;
@@ -29,7 +29,7 @@ http {
 	server {
 		listen 80;
 		listen [::]:80;
-		server_name a.shitposter.io shitposter.io justinsinkula.com;
+		server_name a.shitposter.io shitposter.io justinsinkula.com znc.shitposter.io znc.justinsinkula.com;
 		return 301 https://$host$request_uri;
 	}
 
@@ -44,16 +44,8 @@ http {
 		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
 
-		# honour the fallen
-		add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
-
 		# set root directory
 		root /var/www/html/shitposter.io;
-
-		# expose this directory for letsencrypt authentication
-		location /.well-known/ {
-			alias /var/www/html/.well-known/;
-		}
 
 		location / {
 			# require login
@@ -70,14 +62,6 @@ http {
 		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
 
-		# honour the fallen
-		add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
-
-		# expose this directory for letsencrypt authentication
-		location /.well-known/ {
-			alias /var/www/html/.well-known/;
-		}
-
 		# display photos
 		location /pics/ {
 			root /var/www/html/justinsinkula.com;
@@ -93,4 +77,19 @@ http {
 			root /var/www/html/justinsinkula.com;
 		}
 	}
+
+	# listener for znc control panel
+	server {
+		# listen on the znc subdomain
+		server_name znc.shitposter.io znc.justinsinkula.com;
+
+		# include shared config
+		include /etc/nginx/conf.d/shared.conf;
+
+		# forward requests to znc webadmin
+		location / {
+			proxy_pass https://127.0.0.1:1337/;
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		}
+	}		
 }
