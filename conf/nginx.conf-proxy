@@ -82,7 +82,7 @@ http {
 		resolver 8.8.8.8;
 
 		# disable insecure SSL implementations and ciphers
-		ssl_protocols TLSv1.2 TLSv1.3;
+		ssl_protocols TLSv1.3 TLSv1.2;
 		ssl_prefer_server_ciphers on;
 		ssl_ecdh_curve secp384r1;
 		ssl_ciphers 'TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES-256-GCM-SHA384:TLS13-AES-128-GCM-SHA256:EECDH+CHACHA20:AES256+EECDH:AES256+EDH:!aNULL';
@@ -175,6 +175,19 @@ http {
 		location / {
 			# redirect to my landing page at seednode.co
 			proxy_pass http://10.0.0.4:80/;
+
+			# push required dependencies
+			http2_push /assets/css/font-awesome.css;
+			http2_push assets/css/main.css;
+			http2_push /assets/css/all.css;
+			http2_push /assets/css/font-awesome.min.css;
+			http2_push /assets/css/smartos-icon.css;
+			http2_push /assets/css/SourceSansPro.css;
+			http2_push /assets/fonts/ArvoBold.ttf;
+			http2_push /assets/fonts/SourceSansProSemiBold.ttf;
+			http2_push /assets/fonts/fontawesome-webfont.woff2?v=4.7.0;
+			http2_push /assets/fonts/SourceSansProRegular.ttf;
+			http2_push /assets/fonts/SourceSansProLight.ttf;
 	
 			# enable http strict transport security
 			add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
