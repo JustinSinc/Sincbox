@@ -11,7 +11,8 @@
 ## then download GoTTY:
 # $ wget -qO- https://github.com/yudai/gotty/releases/download/v1.0.1/gotty_linux_amd64.tar.gz | tar xvz -C $HOME/go/bin
 
-## sample nginx config stanza can be found at <pending>
+## sample nginx config stanza can be found at 
+# https://github.com/JustinSinc/Sincbox/blob/master/scripts/watchme/nginx_watchme.conf
 
 # spawn new GoTTY session in a tmux session named "watchme"
 tmux has-session -t watchme || tmux new-session -d -s watchme
