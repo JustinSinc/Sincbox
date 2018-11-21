@@ -14,6 +14,9 @@
 ## sample nginx config stanza can be found at 
 # https://github.com/JustinSinc/Sincbox/blob/master/scripts/watchme/nginx_watchme.conf
 
+# set listen port for gotty
+port="1338"
+
 # spawn new GoTTY session in a tmux session named "watchme"
 tmux has-session -t watchme || tmux new-session -d -s watchme
 
@@ -24,7 +27,7 @@ tmux set-option -g allow-rename off
 tmux set-option -g aggressive-resize on
 
 # start gotty on port 1338 in window 0 of session "watchme"
-tmux send -t watchme "gotty -p 1338 --title-format 'Watch Me!' tmux a -t watchme" && tmux send-key Enter
+tmux send -t watchme "gotty -p "$port" --title-format "Watch Me!" tmux a -t watchme" && tmux send-key Enter
 
 # rename window 0 to "gotty" so it is clear what is running there
 tmux select-window -t watchme:0
