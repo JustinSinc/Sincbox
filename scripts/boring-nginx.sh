@@ -1,12 +1,14 @@
+
+
 #!/usr/bin/env bash
-# a script to build nginx with boringssl on ubuntu and debian
+# a script to build nginx with openssl-dev on ubuntu and debian
 
 ## to build using a newer version of gcc, run the following two lines
 # $ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 700 --slave /usr/bin/g++ g++ /usr/bin/g++-7
 # $ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8
 
 # select the nginx version to build
-LATESTNGINX="1.15.4"
+LATESTNGINX="1.15.6"
 
 # choose where to put the build files
 BUILDROOT="$HOME/nginx-edge"
@@ -14,23 +16,13 @@ BUILDROOT="$HOME/nginx-edge"
 # set core count for make
 core_count="$(grep -c ^processor /proc/cpuinfo)"
 
-# make sure all packages are up-to-date
-sudo apt-get update
-sudo apt-get upgrade -y
+# create array of dependencies
+declare -a dependencies=("build-essential" "gcc" "g++" "cmake" "git" "gnupg" "golang" "libpcre3-dev" "curl" "zligb1g-dev" "libcurl4-openssl-dev")
 
-# install dependencies
-sudo apt-get install -y \
-  build-essential \
-  gcc-8 \
-  g++-8 \
-  cmake \
-  git \
-  gnupg \
-  golang \
-  libpcre3-dev \
-  curl \
-  zlib1g-dev \
-  libcurl4-openssl-dev
+# check if dependencies are installed; if not, install them. if not available for the current os, error out
+for dependency in "${dependencies[@]}"; do
+	sudo dpkg-query -W "$dependency" >/dev/null 2>&1 || { echo >&2 "$dependency is not installed. Installing..."; sudo apt-get -y install "$dependency" >/dev/null 2>&1; } || { echo "Package not available for your system. Install them manually and re-launch the script."; exit 1; }
+done
 
 # delete any previous build directory
 if [ -d "$BUILDROOT" ]; then
@@ -113,4 +105,4 @@ sudo systemctl enable nginx.service
 sudo systemctl start nginx.service
 
 # reload nginx config
-sudo systemctl reload nginx.service
+sudo systemctl restart nginx.service
