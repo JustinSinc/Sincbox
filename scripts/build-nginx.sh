@@ -19,7 +19,7 @@ declare -a dependencies=("build-essential" "gcc" "g++" "cmake" "git" "gnupg" "go
 
 # check if dependencies are installed; if not, install them. if not available for the current os, error out
 for dependency in "${dependencies[@]}"; do
-	sudo dpkg-query -W "$dependency" >/dev/null 2>&1 || { echo >&2 "$dependency is not installed. Installing..."; sudo apt-get -y install "$dependency" >/dev/null 2>&1; } || { echo "Package not available for your system. Install them manually and re-launch the script."; exit 1; }
+	sudo dpkg-query -W "$dependency" >/dev/null 2>&1 || { echo >&2 "$dependency is not installed. Installing..."; sudo apt-get -y install "$dependency" >/dev/null 2>&1; } || { echo "Package not available for your system. Install it manually and re-launch the script."; exit 1; }
 done
 
 # delete any previous build directory
