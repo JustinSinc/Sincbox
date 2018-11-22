@@ -15,7 +15,7 @@ BUILDROOT="$HOME/nginx-edge"
 core_count="$(grep -c ^processor /proc/cpuinfo)"
 
 # create array of dependencies
-declare -a dependencies=("build-essential" "gcc" "g++" "cmake" "git" "gnupg" "golang" "libpcre3-dev" "curl" "zligb1g-dev" "libcurl4-openssl-dev")
+declare -a dependencies=("build-essential" "gcc" "g++" "cmake" "git" "gnupg" "golang" "libpcre3-dev" "curl" "zlib1g-dev" "libcurl4-openssl-dev")
 
 # check if dependencies are installed; if not, install them. if not available for the current os, error out
 for dependency in "${dependencies[@]}"; do
