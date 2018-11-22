@@ -1,0 +1,104 @@
+## /etc/nginx/nginx.conf
+# a basic nginx config file for my personal site
+# requires nginx
+
+##  example certbot command to generate dhparams and letsencrypt certs for this site
+# $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
+# $ wget https://dl.eff.org/certbot-auto && chmod a+x certbot-auto
+# $ sudo ./certbot-auto certonly --webroot -w /var/www/html --rsa-key-size 2048 -d watch.seednode.co --hsts --uir --agree-tos
+
+# run nginx as the www-data user
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+
+events {
+	worker_connections 768;
+}
+
+http {
+	# limit simultaneous connections to protect against slowloris attacks
+	limit_conn_zone $binary_remote_addr zone=addr:10m;
+	limit_conn addr 64;
+
+	# tell nginx what sort of content we'll be displaying
+	include mime.types;
+	default_type application/octet-stream;
+	sendfile on;
+
+	# redirect all non-HTTPS requests to HTTPS
+	server {
+		listen 80;
+		listen [::]:80;
+		server_name watch.seednode.co;
+		return 301 https://$host$request_uri;
+	}
+
+	# set the default index file
+	index index.html;
+
+	# listen for requests to https://watch.seednode.co/ and its subdirectories
+	server {
+		# this nginx vhost is listening for the other hostnames
+		server_name watch.seednode.co;
+
+		# include shared config
+		include /etc/nginx/conf.d/shared.conf;
+
+		location / {
+			root /var/www/html/;
+		}
+	}
+
+	# listener for hls streams
+	server {
+		# this nginx vhost is only listening for connections to watch.seednode.co
+		server_name watch.seednode.co;
+
+		# include shared config
+		include /etc/nginx/conf.d/shared.conf;
+
+		sendfile off;
+		tcp_nopush on;
+		aio on;
+		directio 512;
+
+		location / {
+			# disable cache
+			add_header 'Cache-Control' 'no-cache';
+
+			# cors setup
+			add_header 'Access-Control-Allow-Origin' '*' always;
+			add_header 'Access-Control-Expose-Headers' 'Content-Length';
+
+			# allow cors preflight requests
+			if ($request_method = 'OPTIONS') {
+				add_header 'Access-Control-Allow-Origin' '*';
+				add_header 'Access-Control-Max-Age' 1728000;
+				add_header 'Content-Type' 'text/plain charset=UTF-8';
+				add_header 'Content-Length' 0;
+				return 204;
+			}
+			
+			# operate out of this directory
+			root /var/www/html/;
+		}
+	}
+}
+
+# listener for incoming rtmp feeds
+rtmp {
+	server {
+		listen 1935;
+		chunk_size 4000;
+
+		application live {
+			live on;
+			hls on;
+			hls_path /var/www/html/;
+			hls_fragment 3;
+			hls_playlist_length 60;
+			deny play all;
+		}
+	}
+}
