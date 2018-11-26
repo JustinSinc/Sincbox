@@ -5,7 +5,7 @@
 # designed to be run as an appliance with two network interfaces; one WAN-facing and one on a LAN with the NATed hosts which it will be proxying towards 
 
 ##  example certbot command to generate dhparams and letsencrypt certs for this site
-# $ openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
+# $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
 # $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d seednode.co -d www.seednode.co --hsts --uir --agree-tos --redirect
 
 # run nginx as unprivileged user www-data
@@ -153,9 +153,6 @@ http {
 			# serve files from local web directory
 			root /var/www/html;
 		}
-
-
-
 
 		location ^~ /paste/ {
 			# pass requests to hastebin
