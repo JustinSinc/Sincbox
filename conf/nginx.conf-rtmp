@@ -1,154 +1,95 @@
-# /etc/nginx/nginx.conf 
-# a basic nginx config file for broadcasting rtmp streams to a browser
+## /etc/nginx/nginx.conf
+# a basic nginx config file for my personal site
+# requires nginx
 
-# requires the following packages:
-# nginx-full libnginx-mod-rtmp
-
-# designed for nginx-1.14.0 using the nginx-rtmp-module (https://github.com/arut/nginx-rtmp-module), should work on newer versions
-
-# users should point their streaming client (i.e. obs) towards http://stream.seednode.co/live/
-
-## directory and file layout assumes:
-# /var/www/html/stream.seednode.co as $root
-# https://github.com/JustinSinc/Sincbox/blob/master/seednode.co/index.html-rtmp placed in $root as index.html
-# $root/scripts containing the following two files:
-#	- https://github.com/JustinSinc/Sincbox/blob/master/scripts/flowplayer.min.js
-#	- https://github.com/JustinSinc/Sincbox/blob/master/scripts/flowplayer.hlsjs.min.js
-# $root/hls (for storing the video stream and playlist files)
-# $root/live (a soft symlink to $root/hls)
-## all directories should be chmod 755 and owned by user `www-data`
-
-##  example certbot command to generate dhparams and letsencrypt certs for this site
+##	example certbot command to generate dhparams and letsencrypt certs for this site
 # $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
-# $ sudo certbot certonly --webroot -w /var/www/html/stream.seednode.co/ --rsa-key-size 2048 -d stream.seednode.co --uir --agree-tos --redirect
+# $ wget https://dl.eff.org/certbot-auto && chmod a+x certbot-auto
+# $ sudo ./certbot-auto certonly --webroot -w /var/www/html --rsa-key-size 2048 -d watch.seednode.co --hsts --uir --agree-tos
 
-# run as an unprivileged user
+# run nginx as the www-data user
 user www-data;
 
-# spin up one nginx process per core on the host
+# spawn one worker per cpu thread
 worker_processes auto;
 
-# load the rtmp dynamic module
-load_module "modules/ngx_rtmp_module.so";
+# set pidfile
+pid /run/nginx.pid;
 
-# set the maximum number of clients per worker process
+# set number of connections per worker
 events {
-	worker_connections 1024;
+	worker_connections 768;
 }
 
+# webserver for stream playback
 http {
 	# limit simultaneous connections to protect against slowloris attacks
 	limit_conn_zone $binary_remote_addr zone=addr:10m;
 	limit_conn addr 64;
 
-	# redirect all http traffic to https
+	# tell nginx what sort of content we'll be displaying
+	include mime.types;
+	default_type application/octet-stream;
+	sendfile on;
+
+	# redirect all non-HTTPS requests to HTTPS
 	server {
 		listen 80;
-		server_name stream.seednode.co;
+		listen [::]:80;
+		server_name watch.seednode.co;
 		return 301 https://$host$request_uri;
 	}
 
-	# server the page over https	
+	# listener for hls streams
 	server {
-		# listen on the https port
-		listen 443 ssl http2;
+		# this nginx vhost is only listening for connections to watch.seednode.co
+		server_name watch.seednode.co;
 
-		# disable gzip to prevent CRIME and other side-channel attacks
-		gzip off;
+		# include shared config
+		include /etc/nginx/conf.d/shared.conf;
 
-		# this nginx vhost is only listening for connections to seednode.co
-		server_name stream.seednode.co;
+		sendfile off;
+		tcp_nopush on;
+		aio on;
+		directio 512;
 
-		# enable LetsEncrypt SSL certs
-		ssl_certificate /etc/letsencrypt/live/stream.seednode.co/fullchain.pem;
-		ssl_certificate_key /etc/letsencrypt/live/stream.seednode.co/privkey.pem;
-		ssl_dhparam ssl/dhparam.pem;
-
-		# establish a new tls connection for upstream servers
-		proxy_ssl_session_reuse off;
-
-		# disable insecure SSL implementations and ciphers
-		ssl_protocols TLSv1.2;
-		ssl_prefer_server_ciphers on;
-		ssl_ecdh_curve secp384r1;
-		ssl_ciphers 'AES256+EECDH:AES256+EDH:!aNULL';
-
-		# disable ssl session tickets to ensure perfect forward secrecy
-		ssl_session_cache shared:ssl_session_cache:10m;
-		ssl_session_timeout 10m;
-		ssl_session_tickets off;
-
-		# enable http strict transport security (hsts)
-		add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
-		
-		# block clickjacking attacks
-		add_header X-Frame-Options DENY;
-
-		# disable content-type sniffing
-		add_header X-Content-Type-Options nosniff;
-
-		# force-enable cross-site scripting protection
-		add_header X-XSS-Protection "1; mode=block";
-
-		# set the root for nginx paths
-		root /var/www/html/stream.seednode.co;
-
-		location /live {
-			# tell the server how to handle m3u8 playlists
-			types {
-				application/vnd.apple.mpegurl m3u8;
-			}
-
-			# no need to cache streaming video
-			add_header Cache-Control no-cache;
-
-			# allow cross-domain embedding
-			add_header Access-Control-Allow-Origin *;
-		}
-
-		# serve the flowplayer page from stream.seednode.co
+		# serve hls.js player for web playback
 		location / {
-			root /var/www/html/stream.seednode.co;
-			index index.html;
+			# disable cache
+			add_header 'Cache-Control' 'no-cache';
+
+			# cors setup
+			add_header 'Access-Control-Allow-Origin' '*' always;
+			add_header 'Access-Control-Expose-Headers' 'Content-Length';
+
+			# allow cors preflight requests
+			if ($request_method = 'OPTIONS') {
+				add_header 'Access-Control-Allow-Origin' '*';
+				add_header 'Access-Control-Max-Age' 1728000;
+				add_header 'Content-Type' 'text/plain charset=UTF-8';
+				add_header 'Content-Length' 0;
+				return 204;
+			}
+			
+			# operate out of this directory
+			root /var/www/html/;
 		}
-	}	
+	}
 }
 
-# configure the nginx-rtmp-module
+# listener for incoming rtmp feeds
 rtmp {
 	server {
-		# listen on the default rtmp port
 		listen 1935;
-		
-		# increase chunk size to reduce overhead
-		chunk_size 8192;
-		
-		# allow anyone to stream to the server
-		allow play all;
-		
-		# allow livestreaming via flowplayer
-		application live {		
-			# broadcast a one-to-many stream
+		chunk_size 4000;
+
+		application live {
 			live on;
-			
-			# we won't be recording the streams
-			record off;
-			
-			# skip sending rtmp metadata
-			meta off;
-			
-			# enable http live streaming
 			hls on;
-			
-			# create a subdirectory of hls/ for each streamer
-			hls_nested on;
-			
-			# set the path for hls streams
-			hls_path /var/www/html/stream.seednode.co/hls;
-			
-			# minimize stream latency by streaming four one-second fragments at a time
-			hls_fragment 1;
-			hls_playlist_length 4;
+			hls_path /var/www/html/;
+			hls_fragment 3;
+			hls_playlist_length 60;
+			deny play all;
 		}
 	}
 }
