@@ -4,7 +4,7 @@
 
 # designed to be run as an appliance with two network interfaces; one WAN-facing and one on a LAN with the NATed hosts which it will be proxying towards 
 
-##  example certbot command to generate dhparams and letsencrypt certs for this site
+##	example certbot command to generate dhparams and letsencrypt certs for this site
 # $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
 # $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d seednode.co -d www.seednode.co --hsts --uir --agree-tos --redirect
 
@@ -108,27 +108,18 @@ http {
 		add_header X-XSS-Protection "1; mode=block";
 
 		## error pages
+				# 404 not found
+				# when a requested resource does not exist
+				error_page 404 /404.html;
+
+				location = /404.html {
+						root /var/www/html;
+						internal;
+				}
+
 		# 502 bad gateway
 		# when a service goes offline
-		error_page 502 /offline.html;
-
-		location = /offline.html {
-			root /var/www/html;
-			internal;
-		}
-
-		# 404 not found 
-		# when a requested resource does not exist
-		error_page 404 /404.html;
-
-		location = /404.html {
-			root /var/www/html;
-			internal;
-		}
-
-		# 500 internal server error
-		# when a server is not responding
-		error_page 500 503 504 /50x.html;
+		error_page 500 502 503 504 /50x.html;
 
 		location = /50x.html {
 			root /var/www/html;
