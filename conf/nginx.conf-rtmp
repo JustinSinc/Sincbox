@@ -3,7 +3,7 @@
 # requires nginx-rtmp-module (https://github.com/arut/nginx-rtmp-module)
 # requires ngx-fancyindex (https://github.com/aperezdc/ngx-fancyindex)
 
-## example certbot command to generate dhparams and letsencrypt certs for this site
+##	example certbot command to generate dhparams and letsencrypt certs for this site
 # $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
 # $ wget https://dl.eff.org/certbot-auto && chmod a+x certbot-auto
 # $ sudo ./certbot-auto certonly --webroot -w /var/www/html --rsa-key-size 2048 -d watch.seednode.co --hsts --uir --agree-tos
@@ -117,11 +117,8 @@ http {
 			# hide .html extension
 			rewrite ^(/.*)\.html(\?.*)?$ $1$2 permanent;
 			
-			# hide trailing slash
-			rewrite ^/(.*)/$ /$1 permanent;
-
 			# serve files without the trailing .html
-			try_files $uri/index.html $uri.html $uri/ $uri =404;
+						try_files $uri/index.html $uri/ $uri =404;
 
 			# disable cache
 			add_header 'Cache-Control' 'no-cache';
