@@ -1,8 +1,9 @@
 ## /etc/nginx/nginx.conf
-# a basic nginx config file for my personal site
-# requires nginx
+# nginx config file for rtmp relay and hls streaming
+# requires nginx-rtmp-module (https://github.com/arut/nginx-rtmp-module)
+# requires ngx-fancyindex (https://github.com/aperezdc/ngx-fancyindex)
 
-##	example certbot command to generate dhparams and letsencrypt certs for this site
+## example certbot command to generate dhparams and letsencrypt certs for this site
 # $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
 # $ wget https://dl.eff.org/certbot-auto && chmod a+x certbot-auto
 # $ sudo ./certbot-auto certonly --webroot -w /var/www/html --rsa-key-size 2048 -d watch.seednode.co --hsts --uir --agree-tos
@@ -30,7 +31,18 @@ http {
 	# tell nginx what sort of content we'll be displaying
 	include mime.types;
 	default_type application/octet-stream;
+
+	# handle file copying in kernelspace
 	sendfile on;
+
+	# delay sending packets until full
+	tcp_nopush on;
+
+	# enable asynchronous io
+	aio on;
+
+	# let nginx handle caching, instead of the os
+	directio 512;
 
 	# redirect all non-HTTPS requests to HTTPS
 	server {
@@ -45,18 +57,81 @@ http {
 		# this nginx vhost is only listening for connections to watch.seednode.co
 		server_name watch.seednode.co;
 
-		# include shared config
-		include /etc/nginx/conf.d/shared.conf;
+		# listen on both ipv4 and ipv6
+		listen 443 ssl http2;
+		listen [::]:443 ssl http2;
 
-		sendfile off;
-		tcp_nopush on;
-		aio on;
-		directio 512;
+		# disable gzip to prevent CRIME and other side-channel attacks
+		gzip off;
+
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/watch.seednode.co/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/watch.seednode.co/privkey.pem;
+		ssl_dhparam ssl/dhparam.pem;
+
+		# enable http strict transport security (hsts)
+		add_header Strict-Transport-Security "max-age=63072000; preload" always;
+
+		# disable insecure SSL implementations and ciphers
+		ssl_protocols TLSv1.2 TLSv1.3;
+		ssl_prefer_server_ciphers on;
+		ssl_ecdh_curve secp384r1;
+		ssl_ciphers 'TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES-256-GCM-SHA384:EECDH+CHACHA20:AES256+EECDH:AES256+EDH:!aNULL';
+
+		# disable ssl session tickets to ensure perfect forward secrecy
+		ssl_session_cache shared:SSL:10m;
+		ssl_session_timeout 10m;
+		ssl_session_tickets off;
+
+		# block clickjacking attacks
+		add_header X-Frame-Options DENY;
+
+		# disable content-type sniffing
+		add_header X-Content-Type-Options nosniff;
+
+		# force-enable cross-site scripting protection
+		add_header X-XSS-Protection "1; mode=block";
+
+		# honour the fallen
+		add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
+
+		# expose this directory for letsencrypt authentication
+		location /.well-known/ {
+			alias /var/www/html/.well-known/;
+		}
+
+		# error pages
+		error_page 404 502 503 504 /error.html;
+
+		location = /error.html {
+			root /var/www/html;
+			internal;
+		}
 
 		# serve hls.js player for web playback
 		location / {
+			# restrict access
+			auth_basic "Authentication required";
+			auth_basic_user_file /etc/nginx/.htpasswd;
+			
+			# hide .html extension
+			rewrite ^(/.*)\.html(\?.*)?$ $1$2 permanent;
+			
+			# hide trailing slash
+			rewrite ^/(.*)/$ /$1 permanent;
+
+			# serve files without the trailing .html
+			try_files $uri/index.html $uri.html $uri/ $uri =404;
+
 			# disable cache
 			add_header 'Cache-Control' 'no-cache';
+
+			# enable fancy indexing
+			fancyindex on;
+			fancyindex_exact_size off;
+			
+			# don't index files ending in .html
+			fancyindex_ignore .html;
 
 			# cors setup
 			add_header 'Access-Control-Allow-Origin' '*' always;
@@ -72,7 +147,7 @@ http {
 			}
 			
 			# operate out of this directory
-			root /var/www/html/;
+			root /var/www/html;
 		}
 	}
 }
@@ -87,7 +162,8 @@ rtmp {
 			live on;
 			hls on;
 			hls_path /var/www/html/;
-			hls_fragment 3;
+			hls_fragment 10;
+			hls_cleanup on;
 			hls_playlist_length 60;
 			deny play all;
 		}
