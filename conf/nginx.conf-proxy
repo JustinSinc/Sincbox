@@ -4,7 +4,7 @@
 
 # designed to be run as an appliance with two network interfaces; one WAN-facing and one on a LAN with the NATed hosts which it will be proxying towards 
 
-##	example certbot command to generate dhparams and letsencrypt certs for this site
+## example certbot command to generate dhparams and letsencrypt certs for this site
 # $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
 # $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d seednode.co -d www.seednode.co --hsts --uir --agree-tos --redirect
 
@@ -25,7 +25,7 @@ http {
 	# use proxy errors instead of backend
 	proxy_intercept_errors on;
 
-	# increase maximum file size for high-resolution photos
+	# disable maximum file upload size, for high-resolution photos
 	client_max_body_size 0;
 
 	# limit simultaneous connections to protect against slowloris attacks
