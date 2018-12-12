@@ -8,7 +8,7 @@ set -euo pipefail
 subnet="172.21.0"
 
 # set wireguard server public ip address
-server="208.110.239.222"
+server="<server ip>"
 
 # set wireguard tunnel interface name
 interface="wg0"
