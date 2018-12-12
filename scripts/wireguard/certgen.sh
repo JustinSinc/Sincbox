@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 ## script to generate client wireguard configs as qr codes
+# requires package `qrencode` from the repos
 
 # fail in a sane manner
 set -euo pipefail
