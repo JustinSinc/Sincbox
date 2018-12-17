@@ -10,7 +10,7 @@ sudo apt update && sudo apt install wireguard-dkms wireguard-tools
 # generate keys for wireguard server
 umask 077
 wg genkey | sudo tee /etc/wireguard/privatekey | wg pubkey | sudo tee /etc/wireguard/publickey
-wg genpsk | sudo tee /etc/wireguard/preshared
+wg genpsk | sudo tee /etc/wireguard/presharedkey
 
 # set wan interface name
 wan_interface="eth0"
