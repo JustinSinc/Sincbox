@@ -56,12 +56,14 @@ wg genkey | tee "$certdir"/privatekey | wg pubkey > "$certdir"/publickey
 clientpublickey="$(cat $certdir/publickey)"
 clientprivatekey="$(cat $certdir/privatekey)"
 serverpublickey="$(cat /etc/wireguard/publickey)"
+presharedkey="$(cat /etc/wireguard/presharedkey)"
 
 # add peer to wireguard server configuration
 cat <<EOL | sudo tee -a /etc/wireguard/"$interface".conf
 
 [Peer]
 PublicKey = $clientpublickey
+PresharedKey = $presharedkey
 AllowedIPs = $subnet.$ipaddr/32
 EOL
 
@@ -78,6 +80,7 @@ DNS = $subnet.1
 
 [Peer]
 PublicKey = $serverpublickey
+PresharedKey = $presharedkey
 Endpoint = $server:51820
 AllowedIPs = 0.0.0.0/0
 PersistentKeepalive = 25
