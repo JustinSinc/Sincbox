@@ -75,12 +75,12 @@ cat <<EOL | tee "$certdir"/client.conf
 PrivateKey = $clientprivatekey
 Address = $subnet.$ipaddr/32
 DNS = $subnet.1
-PersistentKeepalive = 25
 
 [Peer]
 PublicKey = $serverpublickey
 Endpoint = $server:51820
 AllowedIPs = 0.0.0.0/0
+PersistentKeepalive = 25
 EOL
 
 # prepend a space before the qr code for easier scanning
