@@ -55,8 +55,8 @@ wg genkey | tee "$certdir"/privatekey | wg pubkey > "$certdir"/publickey
 # set variables for keys
 clientpublickey="$(cat $certdir/publickey)"
 clientprivatekey="$(cat $certdir/privatekey)"
-serverpublickey="$(cat /etc/wireguard/publickey)"
-presharedkey="$(cat /etc/wireguard/presharedkey)"
+serverpublickey="$(sudo cat /etc/wireguard/publickey)"
+presharedkey="$(sudo cat /etc/wireguard/presharedkey)"
 
 # add peer to wireguard server configuration
 cat <<EOL | sudo tee -a /etc/wireguard/"$interface".conf
