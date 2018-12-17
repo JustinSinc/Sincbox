@@ -75,6 +75,7 @@ cat <<EOL | tee "$certdir"/client.conf
 PrivateKey = $clientprivatekey
 Address = $subnet.$ipaddr/32
 DNS = $subnet.1
+PersistentKeepalive = 25
 
 [Peer]
 PublicKey = $serverpublickey
