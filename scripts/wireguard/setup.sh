@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 ## script to set up a basic wireguard server
 
+# install prerequisites
+sudo apt update && sudo apt install software-properties-common
+
 # add the wireguard repository
 sudo add-apt-repository ppa:wireguard/wireguard
 
