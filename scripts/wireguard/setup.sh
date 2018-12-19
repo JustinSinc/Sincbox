@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
 ## script to set up a basic wireguard server
+# must be run as root or with sudo
 
 # install prerequisites
-sudo apt update && sudo apt install software-properties-common
+apt update && apt install software-properties-common
 
 # add the wireguard repository
-sudo add-apt-repository ppa:wireguard/wireguard
+add-apt-repository ppa:wireguard/wireguard
 
 # update packages and install wireguard
-sudo apt update && sudo apt install wireguard wireguard-dkms wireguard-tools
+apt update && apt install wireguard wireguard-dkms wireguard-tools
 
 # generate keys for wireguard server
 umask 077
-wg genkey | sudo tee /etc/wireguard/privatekey | wg pubkey | sudo tee /etc/wireguard/publickey
-wg genpsk | sudo tee /etc/wireguard/presharedkey
+wg genkey | tee /etc/wireguard/privatekey | wg pubkey | tee /etc/wireguard/publickey
+wg genpsk | tee /etc/wireguard/presharedkey
 
 # set wan interface name
 wan_interface="eth0"
@@ -25,7 +26,7 @@ tun_interface="wg0"
 subnet="172.21.0"
 
 # set variables for keys
-privatekey="$(cat etc/wireguard/privatekey)"
+privatekey="$(cat /etc/wireguard/privatekey)"
 
 # generate wireguard config file
 cat <<EOL >/etc/wireguard/"$tun_interface".conf
