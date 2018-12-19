@@ -8,7 +8,7 @@ sudo apt update && sudo apt install software-properties-common
 sudo add-apt-repository ppa:wireguard/wireguard
 
 # update packages and install wireguard
-sudo apt update && sudo apt install wireguard-dkms wireguard-tools
+sudo apt update && sudo apt install wireguard wireguard-dkms wireguard-tools
 
 # generate keys for wireguard server
 umask 077
