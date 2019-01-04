@@ -252,7 +252,7 @@ http {
 			expires 0;
 		}
 
-		location ~ /stats/(?<behost>.*)/(?<ndpath>.*) {
+		location ~ /netdata/(?<behost>.*)/(?<ndpath>.*) {
 			# support for proxied netdata
 			proxy_set_header X-Forwarded-Host $host;
 			proxy_set_header X-Forwarded-Server $host;
@@ -265,7 +265,7 @@ http {
 
 			# require user auth
 			auth_basic "Restricted access";
-			auth_basic_user_file /etc/nginx/htpasswd.stats;
+			auth_basic_user_file /etc/nginx/htpasswd.netdata;
 
 			# allow gzip for netdata
 			gzip on;
@@ -273,9 +273,9 @@ http {
 			gzip_types *;
 		}
 
-		location ~ /stats/(?<behost>.*) {
+		location ~ /netdata/(?<behost>.*) {
 			# trailing slash is required
-			return 301 /stats/$behost/;
+			return 301 /netdata/$behost/;
 		}
 	}
 }
