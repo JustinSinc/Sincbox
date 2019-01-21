@@ -1,39 +1,50 @@
 ## /etc/nginx/nginx.conf
 # a basic nginx config file for my personal site requires nginx
 ##  example certbot command to generate dhparams and letsencrypt certs for this site
-# $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 4096 $ sudo certbot certonly --webroot -w 
-# /var/www/html --rsa-key-size 2048 -d justinsinkula.com -d shitposter.io -d a.shitposter.io -d 
-# znc.shitposter.io -d znc.justinsinkula.com -d blaming.me -d watch.justinsinkula.com -d frozenbutthang.com 
-# --hsts --uir --agree-tos run nginx as the www-data user
-user www-data; worker_processes auto; pid /run/nginx.pid; events {
+# $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 4096
+# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 2048 -d justinsinkula.com -d shitposter.io -d a.shitposter.io -d znc.shitposter.io -d znc.justinsinkula.com -d blaming.me -d watch.justinsinkula.com -d frozenbutthang.com --hsts --uir --agree-tos 
+
+# run nginx as the www-data user
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+
+events {
 	worker_connections 768;
 }
+
 http {
 	# limit simultaneous connections to protect against slowloris attacks
 	limit_conn_zone $binary_remote_addr zone=addr:10m;
 	limit_conn addr 64;
+
 	# tell nginx what sort of content we'll be displaying
 	include mime.types;
 	default_type application/octet-stream;
 	sendfile on;
+
 	# redirect all non-HTTPS requests to HTTPS
 	server {
 		listen 80;
 		listen [::]:80;
-		server_name a.shitposter.io shitposter.io justinsinkula.com blaming.me stop.blaming.me 
-znc.shitposter.io znc.justinsinkula.com frozenbutthang.com;
+		server_name a.shitposter.io shitposter.io justinsinkula.com blaming.me stop.blaming.me znc.shitposter.io znc.justinsinkula.com frozenbutthang.com;
 		return 301 https://$host$request_uri;
 	}
+
 	# set the default index file
 	index index.html;
+
 	# listen for requests to https://a.shitposter.io/ and its subdirectories
 	server {
 		# this nginx vhost is only listening for connections to a.shitposter.io
 		server_name a.shitposter.io;
+
 		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
+
 		# set root directory
 		root /var/www/html/shitposter.io;
+
 		location / {
 			# require login
 			auth_basic "Restricted access";
@@ -43,24 +54,27 @@ znc.shitposter.io znc.justinsinkula.com frozenbutthang.com;
 	
 	# listen for requests to https://frozenbutthang.com/ and its subdirectories
 	server {
-		# this nginx vhost is only listening for connections to a.shitposter.io
+		# this nginx vhost is only listening for connections to frozenbutthang.com
 		server_name frozenbutthang.com;
+
 		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
+
 		# set root directory
 		root /var/www/html/frozenbutthang.com;
-		location / {
-			alias /var/www/html/frozenbutthang.com/pics/;			
-		}
 	}
+
 	# listen for requests to https://justinsinkula.com/ and its subdirectories
 	server {
 		# this nginx vhost is listening for the other hostnames
 		server_name justinsinkula.com shitposter.io blaming.me stop.blaming.me;
+
 		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
+
 		# set root directory
 		root /var/www/html/justinsinkula.com;
+
 		location ^~ /thelounge/ {
 			proxy_pass http://127.0.0.1:9000/;
 			proxy_http_version 1.1;
@@ -70,43 +84,53 @@ znc.shitposter.io znc.justinsinkula.com frozenbutthang.com;
 			proxy_set_header X-Forwarded-Proto $scheme;
 			proxy_read_timeout 1d;
 		}
+
 		location /watchme/ {
 			# redirect to terminal live stream
 			proxy_pass http://localhost:1338/;
+
                         # websockets support
                         proxy_http_version 1.1;
                         proxy_set_header Upgrade $http_upgrade;
                         proxy_set_header Connection "Upgrade";
                         proxy_set_header Host $http_host;
                         proxy_cache_bypass $http_upgrade;
+
                         # disable proxy buffering
                         proxy_buffering off;
                         proxy_redirect default;
+
                         # disable caches
                         expires 0;
 	
 			# a man is not dead while his name is still spoken
 			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
+
 		location / {
 		}
 	}
+
 	# listener for hls streams
 	server {
 		# this nginx vhost is only listening for connections to a.shitposter.io
 		server_name watch.justinsinkula.com;
+
 		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
 		sendfile off;
 		tcp_nopush on;
 		aio on;
 		directio 512;
+
 		location / {
 			# disable cache
 			add_header 'Cache-Control' 'no-cache';
+
 			# cors setup
 			add_header 'Access-Control-Allow-Origin' '*' always;
 			add_header 'Access-Control-Expose-Headers' 'Content-Length';
+
 			# allow cors preflight requests
 			if ($request_method = 'OPTIONS') {
 				add_header 'Access-Control-Allow-Origin' '*';
@@ -115,31 +139,38 @@ znc.shitposter.io znc.justinsinkula.com frozenbutthang.com;
 				add_header 'Content-Length' 0;
 				return 204;
 			}
+
 			# operate out of this directory
 			root /var/www/hls/;
 		}
 	}
+
 	# listener for znc control panel
 	server {
 		# listen on the znc subdomain
 		server_name znc.shitposter.io znc.justinsinkula.com;
+
 		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
+
 		# forward requests to znc webadmin
 		location / {
-			# require login auth_basic "Restricted access"; auth_basic_user_file 
-			#/etc/nginx/.htpasswd;
+			# require login auth_basic "Restricted access"; 
+			auth_basic_user_file /etc/nginx/.htpasswd;
+			
 			# pass requests to znc webadmin
 			proxy_pass https://127.0.0.1:1337/;
 			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 		}
 	}		
 }
+
 # listener for incoming rtmp feeds
 rtmp {
 	server {
 		listen 1935;
 		chunk_size 4000;
+
 		application live {
 			live on;
 			hls on;
