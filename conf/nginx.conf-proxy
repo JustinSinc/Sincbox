@@ -6,11 +6,10 @@
 
 ## example certbot command to generate dhparams and letsencrypt certs for this site
 # $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
-# $ wget https://dl.eff.org/certbot-auto && chmod a+x certbot-auto
-# $ sudo certbot-auto certonly --webroot -w /var/www/html --rsa-key-size 4096 -d seednode.co -d www.seednode.co --hsts --uir --agree-tos --redirect
+# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d seednode.co -d www.seednode.co -d bw.seednode.co --hsts --uir --agree-tos --redirect
 
 # run nginx as unprivileged user www-data
-user www-data;
+user www-data; 
 
 # set the number of workers equal to the cpu count
 worker_processes auto;
@@ -23,15 +22,15 @@ events {
 
 # configuration for the web server itself
 http {
-	# limit simultaneous connections to protect against slowloris attacks
-	limit_conn_zone $binary_remote_addr zone=addr:10m;
-	limit_conn addr 64;
-
 	# use proxy errors instead of backend
 	proxy_intercept_errors on;
 
 	# disable maximum file upload size, for high-resolution photos
 	client_max_body_size 0;
+
+	# limit simultaneous connections to protect against slowloris attacks
+	limit_conn_zone $binary_remote_addr zone=addr:10m;
+	limit_conn addr 64;
 	
 	# cache by hostname and uri pair
 	proxy_cache_key "$scheme$request_method$host$request_uri";
@@ -61,7 +60,7 @@ http {
 	server {
 		listen 80;
 		listen [::]:80;
-		server_name seednode.co www.seednode.co;
+		server_name seednode.co www.seednode.co bw.seednode.co;
 		return 301 https://$host$request_uri;
 	}
 
@@ -114,7 +113,7 @@ http {
 
 		location ^~ /irc/ {
 			# pass requests to thelounge
-			proxy_pass http://127.0.0.1:9000/;
+			proxy_pass http://thelounge-backend/;
 		
 			# thelounge proxying support
 			proxy_http_version 1.1;
@@ -127,10 +126,7 @@ http {
 
 		location ^~ /paste/ {
 			# pass requests to hastebin
-			proxy_pass http://10.0.0.6:7777/;
-
-			# rewrite path to strip /paste/
-			rewrite ^/paste/(.*) /$1 break;
+			proxy_pass http://hastebin-backend/;
 
 			# cache static content
 			proxy_cache haste;
@@ -141,11 +137,14 @@ http {
 			proxy_cache_use_stale error timeout invalid_header updating http_500 http_502 http_503 http_504;
 			proxy_ignore_headers Cache-Control;
 			add_header X-Cache-Status $upstream_cache_status;
+
+			# rewrite path to strip /paste/
+			rewrite ^/paste/(.*) /$1 break;
 		}
 
 		location ^~ /blog/ {
 			# pass requests to ghost
-			proxy_pass http://10.0.0.7:2368;
+			proxy_pass http://ghost-backend;
 
 			# cache static content
 			proxy_cache ghost;
@@ -165,12 +164,12 @@ http {
 		}
 		
 		location /gate/ {
+			# pass requests to gateone
+			proxy_pass http://gateone-backend;
+
 			# require user auth
 			auth_basic "Restricted access";
 			auth_basic_user_file /etc/nginx/htpasswd.me;
-			
-			# pass requests to gateone
-			proxy_pass http://10.0.0.8:80;
 
 			# gateone proxying support
 			proxy_redirect off;
@@ -185,10 +184,7 @@ http {
 
 		location /tryme/ {
 			# pass requests to docker container demo
-			proxy_pass http://64.131.31.99:1337/;
-
-			# disable caches
-			expires 0;
+			proxy_pass http://tryme-backend/;
 
 			# gotty proxying support
 			proxy_buffering off;
@@ -199,15 +195,14 @@ http {
 			proxy_set_header Host $http_host;
 			proxy_cache_bypass $http_upgrade;
 
+			# disable caches
+			expires 0;
 		}
 
 		location /watchme/ {
 			# pass requests to terminal broadcast
-			proxy_pass http://64.131.31.99:1338/;
+			proxy_pass http://watchme-backend/;
 
-			# disable caches
-			expires 0;
-			
 			# gotty proxying support
 			proxy_buffering off;
 			proxy_redirect default;
@@ -216,17 +211,15 @@ http {
 			proxy_set_header Connection "Upgrade";
 			proxy_set_header Host $http_host;
 			proxy_cache_bypass $http_upgrade;
+
+			# disable caches
+			expires 0;
 		}
 
 		location ~ /netdata/(?<behost>.*)/(?<ndpath>.*) {
 			# require user auth
 			auth_basic "Restricted access";
 			auth_basic_user_file /etc/nginx/htpasswd.netdata;
-
-			# allow gzip for netdata
-			gzip on;
-			gzip_proxied any;
-			gzip_types *;
 
 			# netdata proxying support
 			proxy_set_header X-Forwarded-Host $host;
@@ -237,11 +230,51 @@ http {
 			proxy_set_header Connection "keep-alive";
 			proxy_store off;
 			proxy_pass http://$behost/$ndpath$is_args$args;
+
+			# allow gzip for netdata
+			gzip on;
+			gzip_proxied any;
+			gzip_types *;
 		}
 
 		location ~ /netdata/(?<behost>.*) {
 			# trailing slash is required
 			return 301 /netdata/$behost/;
+		}
+	}
+
+	server {
+		# pull in common configs
+		include conf.d/shared.conf;
+
+		# this nginx vhost is only listening for connections to seednode.co
+		server_name bw.seednode.co;
+
+		# allow large attachments
+		client_max_body_size 128M;
+
+		# expose this directory for letsencrypt authentication
+		location /.well-known/ {
+			alias /var/www/html/.well-known/;
+		}
+
+		# serve bitwarden webvault
+		location / {
+			proxy_pass http://bitwarden-backend;
+			proxy_set_header Host $host;
+			proxy_set_header X-Real-IP $remote_addr;
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			proxy_set_header X-Forwarded-Proto $scheme;
+		}
+
+		location /notifications/hub {
+			proxy_pass http://bitwarden-notify;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection "upgrade";
+		}
+
+		location /notifications/hub/negotiate {
+			proxy_pass http://bitwarden-backend;
 		}
 	}
 }
