@@ -2,8 +2,6 @@
 # a basic nginx config file
 # for use as a bitwarden reverse proxy
 
-# designed to be run as an appliance with two network interfaces; one WAN-facing and one on a LAN with the NATed hosts which it will be proxying towards 
-
 ## example certbot command to generate dhparams and letsencrypt certs for this site
 # $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
 # $ wget https://dl.eff.org/certbot-auto && chmod a+x certbot-auto
