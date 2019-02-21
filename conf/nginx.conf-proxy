@@ -242,39 +242,4 @@ http {
 			return 301 /netdata/$behost/;
 		}
 	}
-
-	server {
-		# pull in common configs
-		include conf.d/shared.conf;
-
-		# this nginx vhost is only listening for connections to bw.seednode.co
-		server_name bw.seednode.co;
-
-		# allow large attachments
-		client_max_body_size 128M;
-
-		# expose this directory for letsencrypt authentication
-		location /.well-known/ {
-			alias /var/www/html/.well-known/;
-		}
-
-		# serve bitwarden webvault
-		location / {
-			proxy_pass http://bitwarden-backend;
-			proxy_set_header Host $host;
-			proxy_set_header X-Real-IP $remote_addr;
-			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-			proxy_set_header X-Forwarded-Proto $scheme;
-		}
-
-		location /notifications/hub {
-			proxy_pass http://bitwarden-notify;
-			proxy_set_header Upgrade $http_upgrade;
-			proxy_set_header Connection "upgrade";
-		}
-
-		location /notifications/hub/negotiate {
-			proxy_pass http://bitwarden-backend;
-		}
-	}
 }
