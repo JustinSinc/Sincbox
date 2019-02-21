@@ -1,0 +1,139 @@
+# /etc/nginx/nginx.conf
+# a basic nginx config file
+# for use as a bitwarden reverse proxy
+
+# designed to be run as an appliance with two network interfaces; one WAN-facing and one on a LAN with the NATed hosts which it will be proxying towards 
+
+## example certbot command to generate dhparams and letsencrypt certs for this site
+# $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
+# $ wget https://dl.eff.org/certbot-auto && chmod a+x certbot-auto
+# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d bw.seednode.co --hsts --uir --agree-tos --redirect
+
+# run nginx as unprivileged user www-data
+user www-data; 
+
+# set the number of workers equal to the cpu count
+worker_processes auto;
+
+# set the maximum number of simultaneous connections
+# since this is a proxy server, this is set higher than default
+events {
+	worker_connections 2048;
+}
+
+# listen on the https port
+listen 443 ssl http2;
+listen [::]:443 ssl http2;
+
+# disable gzip to prevent CRIME and other side-channel attacks
+gzip off;
+
+# enable LetsEncrypt SSL certs
+ssl_certificate /etc/letsencrypt/live/bw.seednode.co/fullchain.pem;
+ssl_certificate_key /etc/letsencrypt/live/bw.seednode.co/privkey.pem;
+ssl_dhparam ssl/dhparam.pem;
+
+# establish a new TLS connection for upstream servers
+proxy_ssl_session_reuse off;
+
+# enable oscp stapling
+ssl_stapling on;
+ssl_stapling_verify on;
+resolver 8.8.8.8;
+
+# disable insecure SSL implementations and ciphers
+ssl_protocols TLSv1.3 TLSv1.2;
+ssl_prefer_server_ciphers on;
+ssl_ecdh_curve secp384r1;
+ssl_ciphers 'TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES-256-GCM-SHA384:EECDH+CHACHA20:AES256+EECDH:AES256+EDH:!aNULL';
+
+# disable ssl session tickets to ensure perfect forward secrecy
+ssl_session_cache shared:ssl_session_cache:10m;
+ssl_session_timeout 10m;
+ssl_session_tickets off;
+
+# honour the fallen
+add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
+
+# enable http strict transport security (HSTS)
+add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+# block clickjacking attacks
+add_header X-Frame-Options DENY;
+
+# disable content-type sniffing
+add_header X-Content-Type-Options nosniff;
+
+# force-enable cross-site scripting protection
+add_header X-XSS-Protection "1; mode=block";
+
+# configuration for the web server itself
+http {
+	# use proxy errors instead of backend
+	proxy_intercept_errors on;
+
+	# disable maximum file upload size, for high-resolution photos
+	client_max_body_size 0;
+
+	# limit simultaneous connections to protect against slowloris attacks
+	limit_conn_zone $binary_remote_addr zone=addr:10m;
+	limit_conn addr 64;
+	
+	# cache by hostname and uri pair
+	proxy_cache_key "$scheme$request_method$host$request_uri";
+
+	# only cache these http methods
+	proxy_cache_methods GET HEAD;
+
+	# extend proxy timeout time to prevent issues with proxied websockets connections
+	proxy_read_timeout 120s;
+	proxy_send_timeout 120s;
+
+	# tell nginx what sort of content we'll be displaying
+	include mime.types;
+	default_type application/octet-stream;
+	sendfile on;
+
+	# redirect all non-HTTPS requests to HTTPS
+	server {
+		listen 80;
+		listen [::]:80;
+		server_name bw.seednode.co;
+		return 301 https://$host$request_uri;
+	}
+
+	server {
+		# pull in common configs
+		include conf.d/shared.conf;
+
+		# this nginx vhost is only listening for connections to bw.seednode.co
+		server_name bw.seednode.co;
+
+		# allow large attachments
+		client_max_body_size 128M;
+
+		# expose this directory for letsencrypt authentication
+		location /.well-known/ {
+			alias /var/www/html/.well-known/;
+		}
+
+		# serve bitwarden webvault
+		location / {
+			proxy_pass http://127.0.0.1:80;
+			proxy_set_header Host $host;
+			proxy_set_header X-Real-IP $remote_addr;
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			proxy_set_header X-Forwarded-Proto $scheme;
+		}
+
+		location /notifications/hub {
+			proxy_pass http://127.0.0.1:3012;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection "upgrade";
+		}
+
+		location /notifications/hub/negotiate {
+			proxy_pass http://127.0.0.1:80;
+		}
+	}
+}
