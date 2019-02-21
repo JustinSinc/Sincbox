@@ -69,7 +69,7 @@ http {
 		# pull in common configs
 		include conf.d/shared.conf;
 
-		# this nginx vhost is only listening for connections to seednode.co
+		# this nginx vhost is only listening for connections to {www.}seednode.co
 		server_name seednode.co www.seednode.co;
 
 		# try serving files locally; if they don't exist, serve landing page
@@ -247,7 +247,7 @@ http {
 		# pull in common configs
 		include conf.d/shared.conf;
 
-		# this nginx vhost is only listening for connections to seednode.co
+		# this nginx vhost is only listening for connections to bw.seednode.co
 		server_name bw.seednode.co;
 
 		# allow large attachments
