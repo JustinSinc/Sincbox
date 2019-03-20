@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# assumes you have two physical interfaces, one to use for public networking, and one for private
+# for this example, eth0 is the public interface, and eth1 is the private interface
+
+# the wan interface of the host
+interface="eth0"
+
+# the ip address information for the host
+host_ip="10.0.0.10"
+subnet_mask="24"
+broadcast="10.0.0.0"
+gateway="10.0.0.1"
+
+# set the link state to up
+ip link set dev "$public" up
+
+# add a public ip address for the host
+ip addr add "$host_ip"/"$subnet_mask" broadcast "$broadcast" dev "$interface"
+
+# set a default route for the host
+ip route add default via "$gateway"
+
+# create a macvtap interface for guests requiring public addresses
+ip link add link "$public" name public0 type macvtap
+
+# create a tap device for private networking
+ip tuntap add dev private0 mode tap
