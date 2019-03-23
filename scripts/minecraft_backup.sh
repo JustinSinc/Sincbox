@@ -1,33 +1,36 @@
 #!/usr/bin/env bash
-# a script to back up complete Minecraft server setups
+# a script for backing up minecraft servers running inside lxd containers
+# assumes the server files are located in $HOME of user `mine` inside each container
 
-# shell script best practice
+# shell script best practices
 set -euo pipefail
 
-# set the directory the server is stored in
-server_name="minecraft_misfits"
+# declare array of minecraft servers
+servers=(container1 container2)
 
-# set the filenames to use for backups
-new_filename="nightly_"$(date +%Y%m%d_%H)05.tgz""
-old_filename="nightly_"$(date --date="yesterday" +%Y%m%d_%H)05.tgz""
+# wrap the script into a function for logging purposes
+{
 
-# display backup file name
-echo "Backing up server to "$new_filename"..."
+# for each server, do the following:
+for server in ${servers[@]}; do
+        # display start timestamp for log purposes
+        echo "Started at "$(date +%Y%m%d-%H:%M:%S)"."
 
-# back up server files, skipping the bulky dynmap tilesets
-tar --exclude=plugins/dynmap/web/tiles -zcvf "$HOME/$new_filename" -C "$HOME/$server_name" .
+        # create a tarball of the server files
+        echo "Creating tarball of server "$server"..."
+        lxc exec "$server" -- /bin/sh -c "/bin/tar -czf /backups/"$server"_backup_"$(date +%Y%m%d)".tar.gz -C /home/mine/ ."
 
-# let the user know it finished
-echo "Backed up server to "$new_filename". Exiting..."
+        # copy the tarball to ~/backups/
+        echo "Copying tarball to ~/backups..."
+        lxc file pull "$server"/backups/"$server"_backup_"$(date +%Y%m%d)".tar.gz "$HOME"/backups/
 
-# copy the file over to gate
-scp "$HOME/$new_filename" gate:
+        # send the tarball over to the archive server
+        echo "Sending tarball to archive server..."
+        scp "$HOME"/backups/"$server"_backup_"$(date +%Y%m%d)".tar.gz storage:/storage/minecraft/"$server"
 
-# copy the file from gate to the fallback server
-ssh gate "scp "$HOME/$new_filename" fallback:minecraft_misfits/"
+        # display end timestamp for log purposes
+        echo "Finished at "$(date +%Y%m%d-%H:%M:%S)"."
+done
 
-# delete the file from gate
-ssh gate "rm "$HOME/$new_filename""
-
-# delete the previous day's backup
-rm "$HOME/$old_filename"
+# end function
+} 2>&1 | tee -a "$HOME"/minecraft_backups.log >/dev/null
