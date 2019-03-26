@@ -1,20 +1,17 @@
-harold:
+# harold
 minecraft.command.say
 
-default:
+# default
 minecraft.command.me
-minecraft.command.say
-worldguard.build.block
-worldguard.build.entity
-worldguard.build.item
+worldguard.build.*
 
-member:
+# member
 home.home
 home.sethome
 minecraft.command.msg
 warpsystem.use.simplewarps
 
-mod:
+# mod
 minecraft.command.ban
 minecraft.command.banlist
 minecraft.command.difficulty
@@ -25,13 +22,14 @@ minecraft.command.teleport
 minecraft.command.time
 minecraft.command.weather
 nicknames.lookup
-nicknames.nick
+nicknames.nick.other
+nicknames.nick.self
 warpsystem.modify.simplewarps
 
-admin:
+# admin
 minecraft.command.*
 worldedit.*
 worldguard.*
 
-owner:
+# owner
 *
