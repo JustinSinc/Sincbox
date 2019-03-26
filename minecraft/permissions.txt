@@ -9,7 +9,7 @@ worldguard.build.*
 home.home
 home.sethome
 minecraft.command.msg
-warpsystem.use.simplewarps
+warpsystem.use.*
 
 # mod
 minecraft.command.ban
@@ -24,7 +24,7 @@ minecraft.command.weather
 nicknames.lookup
 nicknames.nick.other
 nicknames.nick.self
-warpsystem.modify.simplewarps
+warpsystem.modify.*
 
 # admin
 minecraft.command.*
