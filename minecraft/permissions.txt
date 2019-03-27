@@ -2,7 +2,11 @@
 minecraft.command.say
 
 # default
+home.home
+home.sethome
 minecraft.command.me
+minecraft.command.msg
+warpsystem.use.*
 worldguard.build.*
 
 # mod
