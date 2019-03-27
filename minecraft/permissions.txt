@@ -5,12 +5,6 @@ minecraft.command.say
 minecraft.command.me
 worldguard.build.*
 
-# member
-home.home
-home.sethome
-minecraft.command.msg
-warpsystem.use.*
-
 # mod
 minecraft.command.ban
 minecraft.command.banlist
