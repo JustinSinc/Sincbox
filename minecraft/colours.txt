@@ -1,0 +1,21 @@
+&4 - Deep red
+&c - Bright red
+&6 - Orange
+&e - Yellow
+&2 - Deep green
+&a - Bright green
+&b - Bright blue
+&3 - Teal
+&1 - Deep blue
+&9 - Blue
+&d - Pink
+&5 - Purple
+&f - White
+&7 - Grey
+
+&l - Bold
+&n - Underline
+&o - Italic
+&k - Magic
+&m - Strikethrough
+&r - Reset
