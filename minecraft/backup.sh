@@ -16,17 +16,20 @@ for server in ${servers[@]}; do
         # display start timestamp for log purposes
         echo "Started at "$(date +%Y%m%d-%H:%M:%S)"."
 
+        # set timestamp variable for use in file naming
+        timestamp="$(date +%Y%m%d)"
+
         # create a tarball of the server files
         echo "Creating tarball of server "$server"..."
-        lxc exec "$server" -- /bin/sh -c "/bin/tar -czf /backups/"$server"_backup_"$(date +%Y%m%d)".tar.gz -C /home/mine/ ."
+        lxc exec "$server" -- /bin/sh -c "/bin/tar -czf /backups/"$server"_backup_"$timestamp".tar.gz -C /home/mine/ ."
 
         # copy the tarball to ~/backups/
         echo "Copying tarball to ~/backups..."
-        lxc file pull "$server"/backups/"$server"_backup_"$(date +%Y%m%d)".tar.gz "$HOME"/backups/
+        lxc file pull "$server"/backups/"$server"_backup_"$timestamp".tar.gz "$HOME"/backups/
 
         # send the tarball over to the archive server
         echo "Sending tarball to archive server..."
-        scp "$HOME"/backups/"$server"_backup_"$(date +%Y%m%d)".tar.gz storage:/storage/minecraft/"$server"
+        scp "$HOME"/backups/"$server"_backup_"$timestamp".tar.gz storage:/storage/minecraft/"$server"
 
         # display end timestamp for log purposes
         echo "Finished at "$(date +%Y%m%d-%H:%M:%S)"."
