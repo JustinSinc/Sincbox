@@ -15,7 +15,7 @@
 # create the data folder
 # $ sudo mkdir -p /bw-data
 
-#launch bitwarden-rs
+# launch bitwarden-rs
 # $ sudo docker run -d 	--name bitwarden \
 #			--restart always \
 #			--user 1001 \
