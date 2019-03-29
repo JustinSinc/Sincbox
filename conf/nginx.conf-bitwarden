@@ -1,6 +1,6 @@
 # /etc/nginx/nginx.conf
 # for use as a reverse proxy
-# for bitwarden-rs ((https://github.com/mprasil/bitwarden_rs))
+# with bitwarden-rs ((https://github.com/mprasil/bitwarden_rs))
 
 ## bitwarden will: ##
 # - run as an unprivileged docker container
