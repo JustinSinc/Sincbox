@@ -1,0 +1,174 @@
+# /etc/nginx/nginx.conf
+# for use as a reverse proxy
+# with bitwarden-rs (https://github.com/mprasil/bitwarden_rs)
+
+## bitwarden will: ##
+# - run as an unprivileged docker container
+# - restart on system reboot
+
+## bitwarden will *not*: ##
+# - allow the creation of new users through the web-UI
+# - allow users to invite new users
+# - display password hints
+
+## install process ##
+# create the data folder
+# $ sudo mkdir -p /bw-data
+
+# launch bitwarden-rs
+# $ sudo docker run -d 	--name bitwarden \
+#			--restart always \
+#			--user 1001 \
+#			-e DOMAIN=https://<your_domain_here> \
+#                       -e WEBSOCKET_ENABLED=true \
+#                       -e SIGNUPS_ALLOWED=false \
+#                       -e INVITATIONS_ALLOWED=false \
+#                       -e SHOW_PASSWORD_HINT=false \
+#                       -e LOG_FILE=/data/bitwarden.log \
+#                       -e ROCKET_PORT=8080 \
+#                       -v /bw-data/:/data/ \
+#                       -p 8080:8080 \
+#                       -p 3012:3012 \
+#                       mprasil/bitwarden:latest
+
+## updating bitwarden ##
+# pull the latest version of the container
+# $ docker pull mprasil/bitwarden:latest
+# stop the existing container
+# $ docker stop bitwarden
+# remove the existing container
+# $ docker rm bitwarden
+# then run the launch command again
+
+## generate letsencrypt cert ##
+# $ sudo mkdir -p /etc/nginx/ssl
+# $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
+# $ wget https://dl.eff.org/certbot-auto && chmod a+x certbot-auto
+# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d <your_domain_here> --hsts --uir --agree-tos --redirect
+
+## begin nginx config ##
+# run nginx as unprivileged user www-data
+user www-data; 
+
+# set the number of workers equal to the cpu count
+worker_processes auto;
+
+# set the maximum number of simultaneous connections
+# since this is a proxy server, this is set higher than default
+events {
+	worker_connections 2048;
+}
+
+# configuration for the web server itself
+http {
+	# use proxy errors instead of backend
+	proxy_intercept_errors on;
+
+	# disable maximum file upload size, for high-resolution photos
+	client_max_body_size 0;
+
+	# limit simultaneous connections to protect against slowloris attacks
+	limit_conn_zone $binary_remote_addr zone=addr:10m;
+	limit_conn addr 64;
+	
+	# cache by hostname and uri pair
+	proxy_cache_key "$scheme$request_method$host$request_uri";
+
+	# only cache these http methods
+	proxy_cache_methods GET HEAD;
+
+	# extend proxy timeout time to prevent issues with proxied websockets connections
+	proxy_read_timeout 120s;
+	proxy_send_timeout 120s;
+
+	# tell nginx what sort of content we'll be displaying
+	include mime.types;
+	default_type application/octet-stream;
+	sendfile on;
+
+	# redirect all non-HTTPS requests to HTTPS
+	server {
+		listen 80;
+		listen [::]:80;
+		server_name <your_domain_here>;
+		return 301 https://$host$request_uri;
+	}
+
+	server {
+		# listen on the https port
+		listen 443 ssl http2;
+		listen [::]:443 ssl http2;
+
+		# disable gzip to prevent CRIME and other side-channel attacks
+		gzip off;
+
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/<your_domain_here>/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/<your_domain_here>/privkey.pem;
+		ssl_dhparam ssl/dhparam.pem;
+
+		# establish a new TLS connection for upstream servers
+		proxy_ssl_session_reuse off;
+
+		# enable oscp stapling
+		ssl_stapling on;
+		ssl_stapling_verify on;
+		resolver 8.8.8.8;
+
+		# disable insecure SSL implementations and ciphers
+		ssl_protocols TLSv1.3 TLSv1.2;
+		ssl_prefer_server_ciphers on;
+		ssl_ecdh_curve secp384r1;
+		ssl_ciphers 'TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES-256-GCM-SHA384:EECDH+CHACHA20:AES256+EECDH:AES256+EDH:!aNULL';
+
+		# disable ssl session tickets to ensure perfect forward secrecy
+		ssl_session_cache shared:ssl_session_cache:10m;
+		ssl_session_timeout 10m;
+		ssl_session_tickets off;
+
+		# honour the fallen
+		add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
+
+		# enable http strict transport security (HSTS)
+		add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+		# block clickjacking attacks
+		add_header X-Frame-Options DENY;
+
+		# disable content-type sniffing
+		add_header X-Content-Type-Options nosniff;
+
+		# force-enable cross-site scripting protection
+		add_header X-XSS-Protection "1; mode=block";
+
+		# this vhost is only listening for connections to <your_domain_here>
+		server_name <your_domain_here>;
+
+		# allow large attachments
+		client_max_body_size 128M;
+
+		# expose this directory for letsencrypt authentication
+		location /.well-known/ {
+			alias /var/www/html/.well-known/;
+		}
+
+		# serve bitwarden webvault
+		location / {
+			proxy_pass http://127.0.0.1:8080;
+			proxy_set_header Host $host;
+			proxy_set_header X-Real-IP $remote_addr;
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			proxy_set_header X-Forwarded-Proto $scheme;
+		}
+
+		location /notifications/hub {
+			proxy_pass http://127.0.0.1:3012;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection "upgrade";
+		}
+
+		location /notifications/hub/negotiate {
+			proxy_pass http://127.0.0.1:8080;
+		}
+	}
+}
