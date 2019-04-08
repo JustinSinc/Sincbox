@@ -19,7 +19,7 @@ for server in ${servers[@]}; do
         # create temporary working directory
         tempdir="$(mktemp -d)"
 
-        # set log directory
+        # set directory to serve logs from
         logdir=/var/www/html/logs/"$server"/
 
         # retrieve log files
