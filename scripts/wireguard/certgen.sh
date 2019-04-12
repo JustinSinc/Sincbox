@@ -2,6 +2,8 @@
 ## script to generate client wireguard configs as qr codes
 # requires package `qrencode` from the repos
 
+## TODO: Unique PSK per client
+
 # fail in a sane manner
 set -euo pipefail
 
