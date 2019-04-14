@@ -31,7 +31,7 @@ for server in ${servers[@]}; do
 	echo "Sent tarball to archive server..."
 
 	# display end timestamp for log purposes
-	echo "Finished backup for server \`"$server"\` at "$(date +%Y%m%d-%H:%M:%S)"."
+	echo -e "Finished backup for server \`"$server"\` at "$(date +%Y%m%d-%H:%M:%S)".\n"
 done
 
 # end function
