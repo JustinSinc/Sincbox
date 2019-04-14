@@ -4,9 +4,8 @@
 # place _h5ai in /storage
 
 ##  example certbot command to generate dhparams and letsencrypt certs for this site
-# $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 4096
-# $ wget https://dl.eff.org/certbot-auto && chmod a+x certbot-auto
-# $ sudo ./certbot-auto certonly --webroot -w /storage --rsa-key-size 2048 -d storage.justinsinkula.com -d storage.shitposter.io -d storage.seednode.co --hsts --uir --agree-tos
+# $ openssl dhparam -out /etc/nginx/ssl/dhparam.pem 4096
+# $ sudo certbot certonly --webroot -w /storage --rsa-key-size 4096 -d storage.justinsinkula.com -d storage.shitposter.io -d storage.seednode.co --must-staple --hsts --uir --agree-tos
 
 # run nginx as the www-data user
 user www-data;
@@ -34,11 +33,11 @@ http {
 
 	# set cache expiration times by content type
 	map $sent_http_content_type $expires {
-		default                    off;
-		text/html                  epoch;
-		text/css                   max;
-		application/javascript     max;
-		~image/                    max;
+		default					  off;
+		text/html				  epoch;
+		text/css				  max;
+		application/javascript	  max;
+		~image/					  max;
 	}
 
 	# cache commonly-accessed files to ssd
@@ -50,9 +49,9 @@ http {
 	proxy_send_timeout 120s;
 
 	# tell nginx what sort of content we'll be displaying
-	include       mime.types;
+	include	   mime.types;
 	default_type  application/octet-stream;
-	sendfile      on;
+	sendfile	  on;
 
 	# redirect all non-HTTPS requests to HTTPS
 	server {
@@ -114,7 +113,7 @@ http {
 
 		# a man is not dead while his name is still spoken
 		add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
-	
+
 		# set root directory
 		root /storage;
 
@@ -131,17 +130,19 @@ http {
 			internal;
 		}
 
-		# set index
-		index index.php index.html index.htm /_h5ai/public/index.php;
-
 		# require authentication
 		auth_basic "Restricted access";
 		auth_basic_user_file /etc/nginx/.htpasswd;
 
-		# serve files located in /storage
+		# bypass authentication for letsencrypt validation
 		location /.well-known/ {
 			auth_basic "off";
 		}
+
+		# enable fancy indexing
+		fancyindex on;
+		fancyindex_exact_size off;
+		fancyindex_ignore ^HeatherPC$ ^cdn$ ^gmn$ ^rtorrent$ ^10G.test$ ^custom ^favicon.ico$ ^torrent$;
 
 		location / {	
 		# First attempt to serve request as file, then
@@ -149,20 +150,36 @@ http {
 			try_files $uri $uri/index.html $uri.html $uri/ =404;
 		}
 
-		# php-fpm configuration
-		location ~ \.php$ {
-			fastcgi_pass unix:/run/php/php7.2-fpm.sock;
-			fastcgi_index index.php;
-			fastcgi_param SCRIPT_FILENAME $document_root/$fastcgi_script_name;
-			include fastcgi_params;
+		# serve photofloat gallery of archive
+		location /gallery/ {
+			rewrite ^/gallery/(.*) /$1 break;
+			root /storage/photofloat/web;
+			try_files $uri $uri/index.html $uri.html $uri/ index.html;
 		}
 
-		location /pics/wedding/ {
+		location = /10G.test {
 			auth_basic "off";
 		}
 
 		# append trailing slash to /pics/ if needed
 		location ~ /pics {
+			rewrite ^([^.\?]*[^/])$ $1/ permanent;
+		}
+	
+		# pass rpc requests to rutorrent
+		location /RPC2 {
+			include scgi_params;
+			scgi_pass localhost:5000;
+		}
+
+		# require user authentication for rtorrent
+		location /rtorrent/ {
+			auth_basic "Restricted access";
+			auth_basic_user_file /etc/nginx/.rtorrent;
+		}
+
+		# append trailing slash to /rtorrent/ if needed
+		location /rtorrent {
 			rewrite ^([^.\?]*[^/])$ $1/ permanent;
 		}
 	}
