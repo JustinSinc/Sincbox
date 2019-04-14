@@ -1,38 +1,37 @@
 #!/usr/bin/env bash
-# a script for backing up minecraft servers running inside lxd containers
-# assumes the server files are located in $HOME of user `mine` inside each container
 
-# shell script best practices
-set -euo pipefail
+# shell script best practice
+set -uo pipefail
 
 # declare array of minecraft servers
-servers=(container1 container2)
+servers=(misfits testing)
 
 # wrap the script into a function for logging purposes
 {
 
 # for each server, do the following:
 for server in ${servers[@]}; do
-        # display start timestamp for log purposes
-        echo "Started at "$(date +%Y%m%d-%H:%M:%S)"."
+	# display start timestamp for log purposes
+	echo -e "\nStarted backup for server \`"$server"\` at "$(date +%Y%m%d-%H:%M:%S)"."
 
-        # set timestamp variable for use in file naming
-        timestamp="$(date +%Y%m%d)"
+	# create a tarball of the server files
+	lxc exec "$server" -- /bin/sh -c "/bin/tar --exclude='plugins/dynmap/web' --exclude='plugins/CoreProtect/database.db' -czf /backups/"$server"_backup_"$(date +%Y%m%d)".tar.gz -C /home/mine/ ."
+	echo "Created tarball of server \`"$server"\`..."
 
-        # create a tarball of the server files
-        echo "Creating tarball of server "$server"..."
-        lxc exec "$server" -- /bin/sh -c "/bin/tar -czf /backups/"$server"_backup_"$timestamp".tar.gz -C /home/mine/ ."
+	# copy the tarball to ~/backups/
+	lxc file pull "$server"/backups/"$server"_backup_"$(date +%Y%m%d)".tar.gz "$HOME"/backups/
+	echo "Copied tarball to \`~/backups\`..."
 
-        # copy the tarball to ~/backups/
-        echo "Copying tarball to ~/backups..."
-        lxc file pull "$server"/backups/"$server"_backup_"$timestamp".tar.gz "$HOME"/backups/
+	# remove the container copy of the tarball
+	lxc exec "$server" -- /bin/sh -c "/bin/rm -f /backups/*"
+	echo "Removed copy of tarball from inside container..."
 
-        # send the tarball over to the archive server
-        echo "Sending tarball to archive server..."
-        scp "$HOME"/backups/"$server"_backup_"$timestamp".tar.gz storage:/storage/minecraft/"$server"
+	# send the tarball over to the archive server
+	scp "$HOME"/backups/"$server"_backup_"$(date +%Y%m%d)".tar.gz storage:/storage/minecraft/"$server"
+	echo "Sent tarball to archive server..."
 
-        # display end timestamp for log purposes
-        echo "Finished at "$(date +%Y%m%d-%H:%M:%S)"."
+	# display end timestamp for log purposes
+	echo "Finished backup for server \`"$server"\` at "$(date +%Y%m%d-%H:%M:%S)"."
 done
 
 # end function
