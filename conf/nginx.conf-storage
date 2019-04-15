@@ -33,11 +33,11 @@ http {
 
 	# set cache expiration times by content type
 	map $sent_http_content_type $expires {
-		default					  off;
-		text/html				  epoch;
-		text/css				  max;
-		application/javascript	  max;
-		~image/					  max;
+		default					 off;
+		text/html				 epoch;
+		text/css				 max;
+		application/javascript	 max;
+		~image/		  			 max;
 	}
 
 	# cache commonly-accessed files to ssd
@@ -49,7 +49,7 @@ http {
 	proxy_send_timeout 120s;
 
 	# tell nginx what sort of content we'll be displaying
-	include	   mime.types;
+	include	   	  mime.types;
 	default_type  application/octet-stream;
 	sendfile	  on;
 
@@ -142,7 +142,7 @@ http {
 		# enable fancy indexing
 		fancyindex on;
 		fancyindex_exact_size off;
-		fancyindex_ignore ^HeatherPC$ ^cdn$ ^gmn$ ^rtorrent$ ^10G.test$ ^custom ^favicon.ico$ ^torrent$;
+		fancyindex_ignore ^HeatherPC$ ^cdn$ ^gmn$ ^10G.test$ ^custom ^favicon.ico$;
 
 		location / {	
 		# First attempt to serve request as file, then
@@ -150,37 +150,14 @@ http {
 			try_files $uri $uri/index.html $uri.html $uri/ =404;
 		}
 
-		# serve photofloat gallery of archive
-		location /gallery/ {
-			rewrite ^/gallery/(.*) /$1 break;
-			root /storage/photofloat/web;
-			try_files $uri $uri/index.html $uri.html $uri/ index.html;
+		# append trailing slash to gallery if needed
+		location ~ /pics {
+			rewrite ^([^.]*[^/])$ $1/ permanent;
 		}
 
+		# 10gb file for test download
 		location = /10G.test {
 			auth_basic "off";
-		}
-
-		# append trailing slash to /pics/ if needed
-		location ~ /pics {
-			rewrite ^([^.\?]*[^/])$ $1/ permanent;
-		}
-	
-		# pass rpc requests to rutorrent
-		location /RPC2 {
-			include scgi_params;
-			scgi_pass localhost:5000;
-		}
-
-		# require user authentication for rtorrent
-		location /rtorrent/ {
-			auth_basic "Restricted access";
-			auth_basic_user_file /etc/nginx/.rtorrent;
-		}
-
-		# append trailing slash to /rtorrent/ if needed
-		location /rtorrent {
-			rewrite ^([^.\?]*[^/])$ $1/ permanent;
 		}
 	}
 }
