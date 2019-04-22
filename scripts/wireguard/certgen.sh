@@ -81,7 +81,7 @@ wg-quick up wg0
 cat <<EOL | tee "$certdir"/client.conf
 [Interface]
 PrivateKey = $clientprivatekey
-Address = $subnetv4.$ipaddr/32, $subnetv6::$ipaddr/64
+Address = $subnetv4.$ipaddr/32, $subnetv6::$ipaddr/128
 DNS = 1.1.1.1, 2606:4700:4700::1111
 
 [Peer]
