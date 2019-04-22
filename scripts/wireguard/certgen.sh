@@ -2,24 +2,26 @@
 ## script to generate client wireguard configs as qr codes
 # requires package `qrencode` from the repos
 
-## TODO: Unique PSK per client
-
 # fail in a sane manner
 set -euo pipefail
 
-# set the first three octets of the vpn subnet
-subnet="172.21.0"
+# set the subnets to be used
+subnetv4="<private ipv4 subnet>"
+subnetv6="<ipv6 subnet>"
 
 # set wireguard server public ip address
-server="<server ip>"
+server="<public ip>"
+
+# set wireguard port
+port="51820"
 
 # set wireguard tunnel interface name
 interface="wg0"
 
 # make sure the correct number of arguments are passed; if not, output syntax and exit
 if [ "$#" -ne 2 ]; then
-	echo -e "\nUsage: wireguard-certgen <client> <last octet of ip address>\n"
-	exit 1
+        echo -e "\nUsage: wireguard-certgen <client> <last octet of ip address>\n"
+        exit 1
 fi
 
 # assign arguments to variables
@@ -34,8 +36,8 @@ logfile="$certdir/build.log"
 
 # delete any old builds if they exist
 if [ -d "$certdir" ]; then
-	echo -e "\nRemoving old wireguard keys..." >> "$logfile" 2>&1
-	rm -rf "$certdir"
+        echo -e "\nRemoving old wireguard keys..." >> "$logfile" 2>&1
+        rm -rf "$certdir"
 fi
 
 # create base directory for account
@@ -54,11 +56,13 @@ echo -e "\nBuild began at $(date +%Y/%m/%d-%H:%M)." >> "$logfile" 2>&1
 umask 077
 wg genkey | tee "$certdir"/privatekey | wg pubkey > "$certdir"/publickey
 
+# generate preshared key for the client
+presharedkey="$(wg genpsk)"
+
 # set variables for keys
 clientpublickey="$(cat $certdir/publickey)"
 clientprivatekey="$(cat $certdir/privatekey)"
 serverpublickey="$(sudo cat /etc/wireguard/publickey)"
-presharedkey="$(sudo cat /etc/wireguard/presharedkey)"
 
 # add peer to wireguard server configuration
 cat <<EOL | sudo tee -a /etc/wireguard/"$interface".conf
@@ -66,7 +70,7 @@ cat <<EOL | sudo tee -a /etc/wireguard/"$interface".conf
 [Peer]
 PublicKey = $clientpublickey
 PresharedKey = $presharedkey
-AllowedIPs = $subnet.$ipaddr/32
+AllowedIPs = $subnetv4.$ipaddr/32, $subnetv6::$ipaddr/128
 EOL
 
 # reload wireguard config
@@ -77,14 +81,14 @@ wg-quick up wg0
 cat <<EOL | tee "$certdir"/client.conf
 [Interface]
 PrivateKey = $clientprivatekey
-Address = $subnet.$ipaddr/32
-DNS = $subnet.1
+Address = $subnetv4.$ipaddr/32, $subnetv6::$ipaddr/64
+DNS = 1.1.1.1, 2606:4700:4700::1111
 
 [Peer]
 PublicKey = $serverpublickey
 PresharedKey = $presharedkey
-Endpoint = $server:51820
-AllowedIPs = 0.0.0.0/0
+Endpoint = $server:$port
+AllowedIPs = 0.0.0.0/0, ::/0
 PersistentKeepalive = 25
 EOL
 
