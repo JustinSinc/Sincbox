@@ -6,8 +6,8 @@
 set -euo pipefail
 
 # set the subnets to be used
-subnetv4="<private ipv4 subnet>"
-subnetv6="<ipv6 subnet>"
+subnetv4="172.0.0"
+subnetv6="fddf:562f:958e:5a4d"
 
 # set wireguard server public ip address
 server="<public ip>"
