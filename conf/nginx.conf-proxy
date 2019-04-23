@@ -95,6 +95,10 @@ http {
 		}
 
 		location /stats/ {
+			# require credentials
+			auth_basic "You shall not pass!";
+			auth_basic_user_file .htpasswd.stats;
+
 			# hide .html extension
 			rewrite ^(/.*)\.html(\?.*)?$ $1$2 permanent;
 
