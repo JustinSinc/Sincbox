@@ -98,8 +98,8 @@ http {
 		# set root directory
 		root /var/www/html/justinsinkula.com;
 
-				# error pages
-				error_page 404 502 503 504 /error.html;
+		# error pages
+		error_page 404 502 503 504 /error.html;
 		
 		location = /error.html {
 			internal;
@@ -109,19 +109,19 @@ http {
 			# redirect to terminal live stream
 			proxy_pass http://localhost:1338/;
 
-						# websockets support
-						proxy_http_version 1.1;
-						proxy_set_header Upgrade $http_upgrade;
-						proxy_set_header Connection "Upgrade";
-						proxy_set_header Host $http_host;
-						proxy_cache_bypass $http_upgrade;
+			# websockets support
+			proxy_http_version 1.1;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection "Upgrade";
+			proxy_set_header Host $http_host;
+			proxy_cache_bypass $http_upgrade;
 
-						# disable proxy buffering
-						proxy_buffering off;
-						proxy_redirect default;
+			# disable proxy buffering
+			proxy_buffering off;
+			proxy_redirect default;
 
-						# disable caches
-						expires 0;
+			# disable caches
+			expires 0;
 	
 			# a man is not dead while his name is still spoken
 			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
