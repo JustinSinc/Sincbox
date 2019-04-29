@@ -5,28 +5,42 @@
 # fail in a sane manner
 set -euo pipefail
 
-# set the subnets to be used
-subnetv4="172.0.0"
-subnetv6="fddf:562f:958e:5a4d"
+# set the private subnets to be used
+subnetv4="10.0.0"
+maskv4="24"
+subnetv6="fdab:1a11:7de6:5b40"
+maskv6="64"
 
-# set wireguard server public ip address
-server="<public ip>"
-
-# set wireguard port
+# set wireguard server public ip address and listen port
+server="<server public ip>"
 port="51820"
 
 # set wireguard tunnel interface name
 interface="wg0"
 
 # make sure the correct number of arguments are passed; if not, output syntax and exit
-if [ "$#" -ne 2 ]; then
-        echo -e "\nUsage: wireguard-certgen <client> <last octet of ip address>\n"
+if [ "$#" -ne 3 ]; then
+        echo -e "\nUsage: wireguard-certgen <access|site> <client name> <last octet of ip address>\n"
+        exit 1
+fi
+
+# set the default routes according to the specified vpn type
+# `access` generates a remote access config (all traffic is routed over tunnel)
+# `site` generates a site-to-site config (only vpn subnets are routed over tunnel)
+if [ "$1" = "access" ]; then
+        routev4="0.0.0.0/0"
+        routev6="::/0"
+elif [ "$1" = "site" ]; then
+        routev4="$subnetv4.0/$maskv4"
+        routev6="$subnetv6::/$maskv6"
+else
+        echo "Connection type must be either access or site."
         exit 1
 fi
 
 # assign arguments to variables
-client="$1"
-ipaddr="$2"
+client="$2"
+ipaddr="$3"
 
 # set imagebuilder directory
 certdir="$HOME/wireguard/$client"
@@ -82,13 +96,13 @@ cat <<EOL | tee "$certdir"/client.conf
 [Interface]
 PrivateKey = $clientprivatekey
 Address = $subnetv4.$ipaddr/32, $subnetv6::$ipaddr/128
-DNS = 1.1.1.1, 2606:4700:4700::1111
+DNS = $subnetv4.1, $subnetv6::1
 
 [Peer]
 PublicKey = $serverpublickey
 PresharedKey = $presharedkey
 Endpoint = $server:$port
-AllowedIPs = 0.0.0.0/0, ::/0
+AllowedIPs = $routev4, $routev6
 PersistentKeepalive = 25
 EOL
 
