@@ -88,8 +88,8 @@ AllowedIPs = $subnetv4.$ipaddr/32, $subnetv6::$ipaddr/128
 EOL
 
 # reload wireguard config
-wg-quick down wg0
-wg-quick up wg0
+wg-quick down "$interface"
+wg-quick up "$interface"
 
 # generate client configuration
 cat <<EOL | tee "$certdir"/client.conf
