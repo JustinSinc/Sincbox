@@ -1,19 +1,25 @@
 ## /etc/nginx/nginx.conf
 # a basic nginx config file for my personal site
-##  example certbot command to generate dhparams and letsencrypt certs for this site
+##	example certbot command to generate dhparams and letsencrypt certs for this site
 # $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
 # $ wget https://dl.eff.org/certbot-auto && chmod a+x certbot-auto
-# $ sudo certbot-auto certonly --webroot -w /var/www/html --rsa-key-size 2048 -d justinsinkula.com -d shitposter.io -d a.shitposter.io -d znc.shitposter.io -d blaming.me -d stop.blaming.me -d cdn.seednode.co -d cdn.justinsinkula.com -d cdn.shitposter.io -d frozenbutthang.com --hsts --uir --agree-tos 
+# $ sudo certbot-auto certonly --webroot -w /var/www/html --rsa-key-size 2048 -d justinsinkula.com -d shitposter.io -d a.shitposter.io -d znc.shitposter.io -d blaming.me -d stop.blaming.me -d cdn.seednode.co -d frozenbutthang.com --hsts --uir --agree-tos 
 
 # run nginx as the www-data user
 user www-data;
+
+# set the number of workers equal to the cpu count
 worker_processes auto;
+
+# set the pid file location
 pid /run/nginx.pid;
 
+# set the maximum number of simultaneous connections
 events {
 	worker_connections 768;
 }
 
+# configuration for the webserver itself
 http {
 	# limit simultaneous connections to protect against slowloris attacks
 	limit_conn_zone $binary_remote_addr zone=addr:10m;
@@ -28,7 +34,7 @@ http {
 	server {
 		listen 80;
 		listen [::]:80;
-		server_name a.shitposter.io shitposter.io justinsinkula.com blaming.me stop.blaming.me znc.shitposter.io znc.justinsinkula.com frozenbutthang.com cdn.seednode.co cdn.justinsinkula.com cdn.shitposter.io;
+		server_name a.shitposter.io shitposter.io justinsinkula.com blaming.me stop.blaming.me znc.shitposter.io frozenbutthang.com cdn.seednode.co unifi.seednode.co;
 		return 301 https://$host$request_uri;
 	}
 
@@ -40,11 +46,15 @@ http {
 		# this nginx vhost is only listening for connections to a.shitposter.io
 		server_name a.shitposter.io;
 
+		# enable fancy indexing
+		fancyindex on;
+		fancyindex_exact_size off;
+
 		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
 
 		# set root directory
-		root /var/www/html/shitposter.io;
+		root /var/www/html/a.shitposter.io;
 
 		location / {
 			# require login
@@ -52,8 +62,8 @@ http {
 			auth_basic_user_file /etc/nginx/.htpasswd;
 		}
 	}
-	
-	# listen for requests to https://frozenbutthang.com/ and its subdirectories
+
+	# listen for requests to https://frozenbutthang.com/
 	server {
 		# this nginx vhost is only listening for connections to frozenbutthang.com
 		server_name frozenbutthang.com;
@@ -63,6 +73,9 @@ http {
 
 		# set root directory
 		root /var/www/html/frozenbutthang.com;
+
+		# disable access logging
+		access_log off;
 
 		# error pages
 		error_page 404 502 503 504 /error.html;
@@ -87,9 +100,9 @@ http {
 		}
 	}
 
-	# listen for requests to https://justinsinkula.com/ and its subdirectories
+	# listen for requests to https://justinsinkula.com/
 	server {
-		# this nginx vhost is listening for the other hostnames
+		# this nginx vhost is listening for several domain names
 		server_name justinsinkula.com shitposter.io blaming.me stop.blaming.me;
 
 		# include shared config
@@ -98,11 +111,34 @@ http {
 		# set root directory
 		root /var/www/html/justinsinkula.com;
 
+		# disable access logging
+		access_log off;
+
 		# error pages
 		error_page 404 502 503 504 /error.html;
 		
 		location = /error.html {
 			internal;
+		}
+
+		location = /grandip {
+			default_type text/plain;
+		}
+
+		location /gmn/ {
+			# require login
+			auth_basic "Restricted access";
+			auth_basic_user_file /etc/nginx/.htpasswd_gmn;
+
+			# enable fancy indexing
+			fancyindex on;
+			fancyindex_exact_size off;
+		}
+
+		location /pics/ {
+			# require login
+			auth_basic "Restricted access";
+			auth_basic_user_file /etc/nginx/.htpasswd_photos;
 		}
 
 		location /watchme/ {
@@ -126,15 +162,12 @@ http {
 			# a man is not dead while his name is still spoken
 			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
-
-		location / {
-		}
 	}
 	
-	# listen for requests to https://cdn.seednode.co/ and its subdirectories
+	# listen for requests to https://cdn.seednode.co/
 	server {
-		# this nginx vhost is listening for the other hostnames
-		server_name cdn.seednode.co cdn.justinsinkula.com cdn.shitposter.io;
+		# this nginx vhost is only listening for connections to cdn.seednode.co
+		server_name cdn.seednode.co;
 		
 		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
@@ -142,56 +175,32 @@ http {
 		# set root directory
 		root /var/www/html/cdn.seednode.co;
 
+		# disable access logging
+		access_log off;
+
 		# error pages
-		error_page 404 /custom_404.html;
+		error_page 404 502 503 504 /error.html;
 
-		location = /custom_404.html {
-			internal;
-		}
-
-		error_page 500 502 503 504 /custom_50x.html;
-
-		location = /custom_50x.html {
+		location = /error.html {
 			internal;
 		}
 
 		# these file types are typically static and can be cached long-term
-			location ~* \.(?:jpg|jpeg|gif|png|ico|gz|svg|svgz|mp4|ogg|ogv|webm|pdf)$ {
-				expires 30d;
-				add_header Cache-Control "public";
-			}
-
-		# set index
-		index index.php index.html index.htm /_h5ai/public/index.php;
-
-		# php-fpm configuration
-		location ~ \.php$ {
-			fastcgi_pass unix:/run/php/php7.2-fpm.sock;
-			fastcgi_index index.php;
-			fastcgi_param SCRIPT_FILENAME $document_root/$fastcgi_script_name;
-			include fastcgi_params;
+		location ~* \.(?:jpg|jpeg|gif|png|ico|gz|svg|svgz|mp4|ogg|ogv|webm|pdf)$ {
+			expires 30d;
+			add_header Cache-Control "public";
 		}
+
+		# enable fancy indexing
+		fancyindex on;
+		fancyindex_exact_size off;
+		fancyindex_ignore ^z$ ^error.html$ ^majora.png$ ^favicon.ico$ ^robots.txt$ ^pics$;
 		
-		# serve files located in /storage
+		# serve files located in /
 		location / {
 			# First attempt to serve request as file, then
 			# as directory, then fall back to displaying a 404.
 			try_files $uri $uri/index.html $uri.html $uri/ =404;
-		}
-
-		# server status info for netdata
-		location /stub_status {
-			stub_status;
-		}
-
-		# require login credentials for specific directories
-		location /z/ {
-			# require login credentials
-			auth_basic "Restricted access";
-			auth_basic_user_file .htpasswd;
-			
-			# serve a different h5ai instance
-			index /z/_h5ai/public/index.php;
 		}
 
 		# serve all files in /txt/ as plain text
@@ -205,9 +214,68 @@ http {
 		}
 	}
 
+	server {		
+		# listen on both ipv4 and ipv6
+		listen 80;
+		listen [::]:80;
+				
+		# this nginx vhost is listening for the cleartext cdn
+		server_name old.blaming.me;
+
+		# disable gzip to prevent CRIME and other side-channel attacks
+		gzip off;
+
+		# block clickjacking attacks
+		add_header X-Frame-Options DENY;
+
+		# disable content-type sniffing
+		add_header X-Content-Type-Options nosniff;
+
+		# force-enable cross-site scripting protection
+		add_header X-XSS-Protection "1; mode=block";
+
+		# enable content security policy
+		add_header Content-Security-Policy "default-src http://old.blaming.me";
+
+		# enable referrer policy
+		add_header Referrer-Policy "strict-origin";
+
+		# enable feature policy
+		add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'none'; fullscreen 'self'; payment 'none'";
+
+		# honour the fallen
+		add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
+
+		# set root directory
+		root /var/www/html/cdn.seednode.co/pics;
+
+		# disable access logging
+		access_log off;
+
+		# error pages
+		error_page 404 502 503 504 /error.html;
+
+		location = /error.html {
+			internal;
+		}
+
+		# these file types are typically static and can be cached long-term
+		location ~* \.(?:jpg|jpeg|gif|png|ico|gz|svg|svgz|mp4|ogg|ogv|webm|pdf)$ {
+			expires 30d;
+			add_header Cache-Control "public";
+		}
+
+		# serve files located in /
+		location / {
+			# First attempt to serve request as file, then
+			# as directory, then fall back to displaying a 404.
+			try_files $uri $uri/index.html $uri.html $uri/ =404;
+		}
+	}
+
 	# listener for znc control panel
 	server {
-		# listen on the znc subdomain
+		# this nginx vhost is only listening for connections to znc.shitposter.io
 		server_name znc.shitposter.io;
 
 		# include shared config
