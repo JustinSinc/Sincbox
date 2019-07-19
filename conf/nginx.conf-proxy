@@ -6,7 +6,7 @@
 
 ## example certbot command to generate dhparams and letsencrypt certs for this site
 # $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
-# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d seednode.co -d www.seednode.co -d bw.seednode.co --hsts --uir --agree-tos --redirect
+# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d seednode.co -d www.seednode.co --hsts --uir --agree-tos --redirect
 
 # run nginx as unprivileged user www-data
 user www-data; 
@@ -41,9 +41,6 @@ http {
 	# create proxy cache for hastebin
 	proxy_cache_path /var/www/cache/haste levels=1:2 keys_zone=haste:60m max_size=300m inactive=1h;
 
-	# create proxy cache for ghost
-	proxy_cache_path /var/www/cache/ghost levels=1:2 keys_zone=ghost:60m max_size=300m inactive=24h;
-
 	# include upstream servers from file
 	include /etc/nginx/conf.d/upstream.conf;
 
@@ -56,11 +53,38 @@ http {
 	default_type application/octet-stream;
 	sendfile on;
 
+	# honour the fallen
+	add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
+
+	# enable http strict transport security (HSTS)
+	add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+	# block clickjacking attacks
+	add_header X-Frame-Options DENY;
+
+	# disable content-type sniffing
+	add_header X-Content-Type-Options nosniff;
+
+	# force-enable cross-site scripting protection
+	add_header X-XSS-Protection "1; mode=block";
+
+	# enable content security policy
+	add_header Content-Security-Policy "default-src https://seednode.co";
+
+	# enable referrer policy
+	add_header Referrer-Policy "strict-origin";
+
+	# enable feature policy
+	add_header Feature-Policy "geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'none'; vibrate 'none'; fullscreen 'self'; payment 'none'";
+
+	# enable expect ct policy
+	add_header Expect-CT "max-age=0, https://seednode.co/ct/report.html";
+
 	# redirect all non-HTTPS requests to HTTPS
 	server {
 		listen 80;
 		listen [::]:80;
-		server_name seednode.co www.seednode.co bw.seednode.co;
+		server_name seednode.co www.seednode.co;
 		return 301 https://$host$request_uri;
 	}
 
@@ -119,6 +143,12 @@ http {
 			# pass requests to thelounge
 			proxy_pass http://thelounge-backend/;
 		
+			# security headers
+			add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+			add_header X-Frame-Options DENY;
+			add_header X-XSS-Protection "1; mode=block";
+			add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'self'; fullscreen 'self'; payment 'none'";
+
 			# thelounge proxying support
 			proxy_http_version 1.1;
 			proxy_set_header Connection "upgrade";
@@ -126,11 +156,23 @@ http {
 			proxy_set_header X-Forwarded-For $remote_addr;
 			proxy_set_header X-Forwarded-Proto $scheme;
 			proxy_read_timeout 1d;
+
+			# honour the fallen
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}		
 
 		location ^~ /paste/ {
 			# pass requests to hastebin
 			proxy_pass http://hastebin-backend/;
+
+			# security headers
+			add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+			add_header X-Frame-Options DENY;
+			add_header X-Content-Type-Options nosniff;
+			add_header X-XSS-Protection "1; mode=block";
+			add_header Content-Security-Policy "default-src https://seednode.co; script-src-elem https://ajax.googleapis.com https://seednode.co 'unsafe-inline'; style-src 'unsafe-inline'; style-src-elem https://seednode.co 'unsafe-inline'";
+			add_header Referrer-Policy "strict-origin";
+			add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'none'; fullscreen 'self'; payment 'none'";
 
 			# cache static content
 			proxy_cache haste;
@@ -144,52 +186,24 @@ http {
 
 			# rewrite path to strip /paste/
 			rewrite ^/paste/(.*) /$1 break;
-		}
 
-		location ^~ /blog/ {
-			# pass requests to ghost
-			proxy_pass http://ghost-backend;
-
-			# cache static content
-			proxy_cache ghost;
-			proxy_cache_valid 60m;
-			proxy_cache_valid 404 1m;
-			proxy_ignore_headers Set-Cookie;
-			proxy_hide_header Set-Cookie;
-			proxy_cache_use_stale error timeout invalid_header updating http_500 http_502 http_503 http_504;
-			proxy_ignore_headers Cache-Control;
-			add_header X-Cache-Status $upstream_cache_status;
-
-			# ghost proxying support
-			proxy_set_header Host $http_host;
-			proxy_set_header X-Real-IP $remote_addr;
-			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-			proxy_set_header X-Forwarded-Proto $scheme;
-		}
-		
-		location /gate/ {
-			# pass requests to gateone
-			proxy_pass http://gateone-backend;
-
-			# require user auth
-			auth_basic "Restricted access";
-			auth_basic_user_file /etc/nginx/htpasswd.me;
-
-			# gateone proxying support
-			proxy_redirect off;
-			proxy_pass_header Server;
-			proxy_set_header Host $http_host;
-			proxy_set_header X-Real-IP $http_address;
-			proxy_set_header X-Scheme $scheme;
-			proxy_http_version 1.1;
-			proxy_set_header Upgrade $http_upgrade;
-			proxy_set_header Connection "upgrade";
+			# honour the fallen
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
 
 		location /tryme/ {
 			# pass requests to docker container demo
 			proxy_pass http://tryme-backend/;
 
+			# security headers
+			add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+			add_header X-Frame-Options DENY;
+			add_header X-Content-Type-Options nosniff;
+			add_header X-XSS-Protection "1; mode=block";
+			add_header Content-Security-Policy "default-src https://seednode.co; connect-src wss://seednode.co/tryme/ws; style-src 'unsafe-inline'; media-src 'self' data:";
+			add_header Referrer-Policy "strict-origin";
+			add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'self'; fullscreen 'self'; payment 'none'";
+			
 			# gotty proxying support
 			proxy_buffering off;
 			proxy_redirect default;
@@ -201,12 +215,24 @@ http {
 
 			# disable caches
 			expires 0;
+
+			# honour the fallen
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;	
 		}
 
 		location /watchme/ {
 			# pass requests to terminal broadcast
 			proxy_pass http://watchme-backend/;
 
+			# security headers
+			add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+			add_header X-Frame-Options DENY;
+			add_header X-Content-Type-Options nosniff;
+			add_header X-XSS-Protection "1; mode=block";
+			add_header Content-Security-Policy "default-src https://seednode.co; connect-src wss://seednode.co/watchme/ws; style-src 'unsafe-inline'; media-src 'self' data:";
+			add_header Referrer-Policy "strict-origin";
+			add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'self'; fullscreen 'self'; payment 'none'";
+
 			# gotty proxying support
 			proxy_buffering off;
 			proxy_redirect default;
@@ -218,32 +244,9 @@ http {
 
 			# disable caches
 			expires 0;
-		}
 
-		location ~ /netdata/(?<behost>.*)/(?<ndpath>.*) {
-			# require user auth
-			auth_basic "Restricted access";
-			auth_basic_user_file /etc/nginx/htpasswd.netdata;
-
-			# netdata proxying support
-			proxy_set_header X-Forwarded-Host $host;
-			proxy_set_header X-Forwarded-Server $host;
-			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-			proxy_http_version 1.1;
-			proxy_pass_request_headers on;
-			proxy_set_header Connection "keep-alive";
-			proxy_store off;
-			proxy_pass http://$behost/$ndpath$is_args$args;
-
-			# allow gzip for netdata
-			gzip on;
-			gzip_proxied any;
-			gzip_types *;
-		}
-
-		location ~ /netdata/(?<behost>.*) {
-			# trailing slash is required
-			return 301 /netdata/$behost/;
+			# honour the fallen
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
 	}
 }
