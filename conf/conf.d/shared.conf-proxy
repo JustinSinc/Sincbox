@@ -16,7 +16,8 @@ proxy_ssl_session_reuse off;
 # enable oscp stapling
 ssl_stapling on;
 ssl_stapling_verify on;
-resolver 8.8.8.8;
+resolver 1.1.1.1 8.8.8.8 valid=300s;
+resolver_timeout 5s;
 
 # disable insecure SSL implementations and ciphers
 ssl_protocols TLSv1.3 TLSv1.2;
@@ -38,8 +39,8 @@ ssl_early_data on;
 error_page 404 /404.html;
 
 location = /404.html {
-		root /var/www/html;
-		internal;
+	root /var/www/html;
+	internal;
 }
 
 # 502 bad gateway
@@ -47,6 +48,6 @@ location = /404.html {
 error_page 500 502 503 504 /50x.html;
 
 location = /50x.html {
-		root /var/www/html;
-		internal;
+	root /var/www/html;
+	internal;
 }
