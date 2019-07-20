@@ -46,7 +46,7 @@ add_header X-Content-Type-Options nosniff;
 add_header X-XSS-Protection "1; mode=block";
 
 # enable content security policy
-add_header Content-Security-Policy "default-src 'self'; style-src 'unsafe-inline'";
+add_header Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline'";
 
 # enable referrer policy
 add_header Referrer-Policy "strict-origin";
