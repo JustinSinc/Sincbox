@@ -48,7 +48,7 @@ tmux set-option -g aggressive-resize on
 tmux set-option -g status off
 
 # start gotty on port 1338 in window 0
-tmux send -t dorf "gotty -p "$port" --title-format 'Join Me!' tmux a -t dorf" && tmux send-key Enter
+tmux send -t dorf "gotty -w -p "$port" --title-format 'Join Me!' tmux a -t dorf" && tmux send-key Enter
 
 # rename window 0 to "gotty" so it is clear what is running there
 tmux select-window -t dorf:0
