@@ -6,8 +6,8 @@ listen [::]:443 ssl http2;
 gzip off;
 
 # enable LetsEncrypt SSL certs
-ssl_certificate /etc/letsencrypt/live/seednode.co/fullchain.pem;
-ssl_certificate_key /etc/letsencrypt/live/seednode.co/privkey.pem;
+ssl_certificate /etc/letsencrypt/live/seedno.de/fullchain.pem;
+ssl_certificate_key /etc/letsencrypt/live/seedno.de/privkey.pem;
 ssl_dhparam ssl/dhparam.pem;
 
 # establish a new TLS connection for upstream servers
