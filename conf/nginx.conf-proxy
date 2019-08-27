@@ -38,9 +38,6 @@ http {
 	# only cache these http methods
 	proxy_cache_methods GET HEAD;
 
-	# create proxy cache for hastebin
-	proxy_cache_path /var/www/cache/haste levels=1:2 keys_zone=haste:60m max_size=300m inactive=1h;
-
 	# include upstream servers from file
 	include /etc/nginx/conf.d/upstream.conf;
 
