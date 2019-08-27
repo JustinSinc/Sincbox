@@ -17,7 +17,7 @@ worker_processes auto;
 # set the maximum number of simultaneous connections
 # since this is a proxy server, this is set higher than default
 events {
-		worker_connections 2048;
+	worker_connections 2048;
 }
 
 # configuration for the web server itself
