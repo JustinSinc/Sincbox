@@ -1,15 +1,15 @@
 # /etc/nginx/nginx.conf
-# a basic nginx config file to redirect requests to ports 
-# for use on Sinc's container hosting service 
+# a basic nginx config file to redirect requests to ports
+# for use on Sinc's container hosting service
 
-# designed to be run as an appliance with two network interfaces; one WAN-facing and one on a LAN with the NATed hosts which it will be proxying towards 
+# designed to be run as an appliance with two network interfaces; one WAN-facing and one on a LAN with the NATed hosts which it will be proxying towards
 
 ## example certbot command to generate dhparams and letsencrypt certs for this site
 # $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
-# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d seednode.co -d www.seednode.co --hsts --uir --agree-tos --redirect
+# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d seedno.de -d seednode.co --hsts --uir --agree-tos --redirect
 
 # run nginx as unprivileged user www-data
-user www-data; 
+user www-data;
 
 # set the number of workers equal to the cpu count
 worker_processes auto;
@@ -17,7 +17,7 @@ worker_processes auto;
 # set the maximum number of simultaneous connections
 # since this is a proxy server, this is set higher than default
 events {
-	worker_connections 2048;
+		worker_connections 2048;
 }
 
 # configuration for the web server itself
@@ -31,7 +31,7 @@ http {
 	# limit simultaneous connections to protect against slowloris attacks
 	limit_conn_zone $binary_remote_addr zone=addr:10m;
 	limit_conn addr 64;
-	
+
 	# cache by hostname and uri pair
 	proxy_cache_key "$scheme$request_method$host$request_uri";
 
@@ -68,24 +68,30 @@ http {
 	# force-enable cross-site scripting protection
 	add_header X-XSS-Protection "1; mode=block";
 
-	# enable content security policy
-	add_header Content-Security-Policy "default-src https://seednode.co";
-
 	# enable referrer policy
 	add_header Referrer-Policy "strict-origin";
 
 	# enable feature policy
-	add_header Feature-Policy "geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'none'; vibrate 'none'; fullscreen 'self'; payment 'none'";
+	add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'none'; fullscreen 'self'; payment 'none'";
 
 	# enable expect ct policy
-	add_header Expect-CT "max-age=0, https://seednode.co/ct/report.html";
+	add_header Expect-CT "max-age=0, https://seedno.de/ct/report.html";
 
 	# redirect all non-HTTPS requests to HTTPS
 	server {
 		listen 80;
 		listen [::]:80;
-		server_name seednode.co www.seednode.co;
-		return 301 https://$host$request_uri;
+		server_name seedno.de seednode.co;
+		return 301 https://seedno.de$request_uri;
+	}
+
+	# redirect seednode.co to seedno.de
+	server {
+		# pull in common configs
+		include conf.d/shared.conf;
+
+		server_name seednode.co;
+		return 301 https://seedno.de$request_uri;
 	}
 
 	# listen for requests to https://seednode.co/ and its subdirectories
@@ -93,17 +99,17 @@ http {
 		# pull in common configs
 		include conf.d/shared.conf;
 
-		# this nginx vhost is only listening for connections to {www.}seednode.co
-		server_name seednode.co www.seednode.co;
+		# this nginx vhost is only listening for connections to seedno.de
+		server_name seedno.de;
 
 		# try serving files locally; if they don't exist, serve landing page
 		location / {
 			# hide .html extension
 			rewrite ^(/.*)\.html(\?.*)?$ $1$2 permanent;
-			
+
 			# hide trailing slash
 			rewrite ^/(.*)/$ /$1 permanent;
-			
+
 			# serve landing page
 			index index.html;
 
@@ -142,7 +148,7 @@ http {
 		location ^~ /irc/ {
 			# pass requests to thelounge
 			proxy_pass http://thelounge-backend/;
-		
+
 			# security headers
 			add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
 			add_header X-Frame-Options DENY;
@@ -159,36 +165,6 @@ http {
 
 			# honour the fallen
 			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
-		}		
-
-		location ^~ /paste/ {
-			# pass requests to hastebin
-			proxy_pass http://hastebin-backend/;
-
-			# security headers
-			add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
-			add_header X-Frame-Options DENY;
-			add_header X-Content-Type-Options nosniff;
-			add_header X-XSS-Protection "1; mode=block";
-			add_header Content-Security-Policy "default-src https://seednode.co; script-src-elem https://ajax.googleapis.com https://seednode.co 'unsafe-inline'; style-src 'unsafe-inline'; style-src-elem https://seednode.co 'unsafe-inline'";
-			add_header Referrer-Policy "strict-origin";
-			add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'none'; fullscreen 'self'; payment 'none'";
-
-			# cache static content
-			proxy_cache haste;
-			proxy_cache_valid 60m;
-			proxy_cache_valid 404 1m;
-			proxy_ignore_headers Set-Cookie;
-			proxy_hide_header Set-Cookie;
-			proxy_cache_use_stale error timeout invalid_header updating http_500 http_502 http_503 http_504;
-			proxy_ignore_headers Cache-Control;
-			add_header X-Cache-Status $upstream_cache_status;
-
-			# rewrite path to strip /paste/
-			rewrite ^/paste/(.*) /$1 break;
-
-			# honour the fallen
-			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
 
 		location /tryme/ {
@@ -200,10 +176,10 @@ http {
 			add_header X-Frame-Options DENY;
 			add_header X-Content-Type-Options nosniff;
 			add_header X-XSS-Protection "1; mode=block";
-			add_header Content-Security-Policy "default-src https://seednode.co; connect-src wss://seednode.co/tryme/ws; style-src 'unsafe-inline'; media-src 'self' data:";
+			add_header Content-Security-Policy "default-src https://seedno.de; connect-src wss://seedno.de/tryme/ws; style-src 'unsafe-inline'; media-src 'self' data:";
 			add_header Referrer-Policy "strict-origin";
 			add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'self'; fullscreen 'self'; payment 'none'";
-			
+
 			# gotty proxying support
 			proxy_buffering off;
 			proxy_redirect default;
@@ -217,7 +193,7 @@ http {
 			expires 0;
 
 			# honour the fallen
-			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;	
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
 
 		location /watchme/ {
@@ -229,7 +205,7 @@ http {
 			add_header X-Frame-Options DENY;
 			add_header X-Content-Type-Options nosniff;
 			add_header X-XSS-Protection "1; mode=block";
-			add_header Content-Security-Policy "default-src https://seednode.co; connect-src wss://seednode.co/watchme/ws; style-src 'unsafe-inline'; media-src 'self' data:";
+			add_header Content-Security-Policy "default-src https://seedno.de; connect-src wss://seedno.de/watchme/ws; style-src https://seedno.de 'unsafe-inline'; media-src 'self' data:";
 			add_header Referrer-Policy "strict-origin";
 			add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'self'; fullscreen 'self'; payment 'none'";
 
