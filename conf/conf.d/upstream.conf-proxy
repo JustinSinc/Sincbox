@@ -3,10 +3,6 @@ upstream thelounge-backend {
         server <ip>:<port>;
 }
 
-upstream hastebin-backend {
-        server <ip>:<port>;
-}
-
 upstream tryme-backend {
         server <ip>:<port>;
 }
