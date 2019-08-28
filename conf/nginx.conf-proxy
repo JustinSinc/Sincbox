@@ -1,15 +1,14 @@
 # /etc/nginx/nginx.conf
-# a basic nginx config file to redirect requests to ports
-# for use on Sinc's container hosting service
+# a basic nginx config file to redirect requests to ports 
+# for use on Sinc's container hosting service 
 
-# designed to be run as an appliance with two network interfaces; one WAN-facing and one on a LAN with the NATed hosts which it will be proxying towards
+# designed to be run as an appliance with two network interfaces; one WAN-facing and one on a LAN with the NATed hosts which it will be proxying towards 
 
 ## example certbot command to generate dhparams and letsencrypt certs for this site
 # $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
-# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d seedno.de -d seednode.co --hsts --uir --agree-tos --redirect
 
 # run nginx as unprivileged user www-data
-user www-data;
+user www-data; 
 
 # set the number of workers equal to the cpu count
 worker_processes auto;
@@ -31,7 +30,7 @@ http {
 	# limit simultaneous connections to protect against slowloris attacks
 	limit_conn_zone $binary_remote_addr zone=addr:10m;
 	limit_conn addr 64;
-
+	
 	# cache by hostname and uri pair
 	proxy_cache_key "$scheme$request_method$host$request_uri";
 
@@ -103,10 +102,10 @@ http {
 		location / {
 			# hide .html extension
 			rewrite ^(/.*)\.html(\?.*)?$ $1$2 permanent;
-
+			
 			# hide trailing slash
 			rewrite ^/(.*)/$ /$1 permanent;
-
+			
 			# serve landing page
 			index index.html;
 
@@ -145,7 +144,7 @@ http {
 		location ^~ /irc/ {
 			# pass requests to thelounge
 			proxy_pass http://thelounge-backend/;
-
+		
 			# security headers
 			add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
 			add_header X-Frame-Options DENY;
@@ -162,11 +161,11 @@ http {
 
 			# honour the fallen
 			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
-		}
+		}		
 
-		location /tryme/ {
+		location /try/ {
 			# pass requests to docker container demo
-			proxy_pass http://tryme-backend/;
+			proxy_pass http://try-backend/;
 
 			# security headers
 			add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
@@ -176,7 +175,7 @@ http {
 			add_header Content-Security-Policy "default-src https://seedno.de; connect-src wss://seedno.de/tryme/ws; style-src 'unsafe-inline'; media-src 'self' data:";
 			add_header Referrer-Policy "strict-origin";
 			add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'self'; fullscreen 'self'; payment 'none'";
-
+			
 			# gotty proxying support
 			proxy_buffering off;
 			proxy_redirect default;
@@ -190,19 +189,19 @@ http {
 			expires 0;
 
 			# honour the fallen
-			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;	
 		}
 
-		location /watchme/ {
+		location /watch/ {
 			# pass requests to terminal broadcast
-			proxy_pass http://watchme-backend/;
+			proxy_pass http://watch-backend/;
 
 			# security headers
 			add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
 			add_header X-Frame-Options DENY;
 			add_header X-Content-Type-Options nosniff;
 			add_header X-XSS-Protection "1; mode=block";
-			add_header Content-Security-Policy "default-src https://seedno.de; connect-src wss://seedno.de/watchme/ws; style-src https://seedno.de 'unsafe-inline'; media-src 'self' data:";
+			add_header Content-Security-Policy "default-src https://seedno.de; connect-src wss://seedno.de/watch/ws; style-src https://seedno.de 'unsafe-inline'; media-src 'self' data:";
 			add_header Referrer-Policy "strict-origin";
 			add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'self'; fullscreen 'self'; payment 'none'";
 
