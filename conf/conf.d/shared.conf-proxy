@@ -45,9 +45,9 @@ location = /404.html {
 
 # 502 bad gateway
 # when a service goes offline
-error_page 500 502 503 504 /50x.html;
+error_page 500 502 503 504 /offline.html;
 
-location = /50x.html {
+location = /offline.html {
 	root /var/www/html;
 	internal;
 }
