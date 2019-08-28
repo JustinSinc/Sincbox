@@ -234,13 +234,18 @@ http {
 		access_log off;
 
 		# error pages
-		error_page 404 500 502 503 504 /error.html;
+		error_page 404 /error.html;
+		error_page 500 502 503 504 /error.html;
 
 		location = /error.html {
 			internal;
 		}
 
-		location = /majora.png {
+		location = /offline.html {
+			internal;
+		}
+
+		location = /seednode.png {
 			root /var/www/html/blaming.me;
 		}
 
