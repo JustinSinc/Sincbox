@@ -5,9 +5,7 @@ listen [::]:443 ssl http2;
 # disable gzip to prevent CRIME and other side-channel attacks
 gzip off;
 
-# enable LetsEncrypt SSL certs
-ssl_certificate /etc/letsencrypt/live/justinsinkula.com/fullchain.pem;
-ssl_certificate_key /etc/letsencrypt/live/justinsinkula.com/privkey.pem;
+# ssl dh params
 ssl_dhparam ssl/dhparam.pem;
 
 # establish a new TLS connection for upstream servers
@@ -59,5 +57,5 @@ add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 
 # expose this directory for letsencrypt authentication
 location /.well-known/ {
-	alias /var/www/html/.well-known/;
+        alias /var/www/html/.well-known/;
 }
