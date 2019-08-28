@@ -1,9 +1,8 @@
 ## /etc/nginx/nginx.conf
 # a basic nginx config file for my personal site
-## example certbot command to generate dhparams and letsencrypt certs for this site
+##  example certbot command to generate dhparams and letsencrypt certs for this site
 # $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
 # $ wget https://dl.eff.org/certbot-auto && chmod a+x certbot-auto
-# $ sudo certbot-auto certonly --webroot -w /var/www/html --rsa-key-size 2048 -d justinsinkula.com -d shitposter.io -d a.shitposter.io -d znc.shitposter.io -d blaming.me -d stop.blaming.me -d cdn.seednode.co -d frozenbutthang.com --hsts --uir --agree-tos 
 
 # run nginx as the www-data user
 user www-data;
@@ -21,6 +20,9 @@ events {
 
 # configuration for the webserver itself
 http {
+	# use proxy errors instead of backend
+	proxy_intercept_errors on;
+
 	# limit simultaneous connections to protect against slowloris attacks
 	limit_conn_zone $binary_remote_addr zone=addr:10m;
 	limit_conn addr 64;
@@ -30,28 +32,64 @@ http {
 	default_type application/octet-stream;
 	sendfile on;
 
+	# set the default index file
+	index index.html;
+
 	# redirect all non-HTTPS requests to HTTPS
 	server {
 		listen 80;
 		listen [::]:80;
-		server_name a.shitposter.io shitposter.io justinsinkula.com blaming.me stop.blaming.me znc.shitposter.io frozenbutthang.com cdn.seednode.co unifi.seednode.co;
+		server_name a.shitposter.io shitposter.io justinsinkula.com blaming.me stop.blaming.me znc.shitposter.io frozenbutthang.com cdn.seedno.de unifi.seedno.de;
+		
+		# rewrite url
 		return 301 https://$host$request_uri;
 	}
 
-	# set the default index file
-	index index.html;
-
-	# listen for requests to https://a.shitposter.io/ and its subdirectories
+	# redirect http://cdn.seednode.co to https://cdn.seedno.de
 	server {
-		# this nginx vhost is only listening for connections to a.shitposter.io
+		listen 80;
+		listen [::]:80;
+		server_name cdn.seednode.co;
+
+		# rewrite url
+		return 301 https://cdn.seedno.de$request_uri;
+	}
+
+	# redirect http://unifi.seednode.co/ to https://unifi.seedno.de/
+	server {
+		listen 80;
+		listen [::]:80;
+		server_name unifi.seednode.co;
+
+		# rewrite url
+		return 301 https://unifi.seedno.de$request_uri;
+	}
+
+	# redirect https://unifi.seednode.co/ to https://unifi.seedno.de/
+	server {
+		server_name unifi.seednode.co;
+		include /etc/nginx/conf.d/shared.conf;
+
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/unifi.seednode.co/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/unifi.seednode.co/privkey.pem;
+
+		# rewrite url
+		return 301 https://unifi.seedno.de$request_uri;
+	}
+
+	# listen for requests to https://a.shitposter.io/
+	server {
 		server_name a.shitposter.io;
+		include /etc/nginx/conf.d/shared.conf;
+
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/a.shitposter.io/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/a.shitposter.io/privkey.pem;
 
 		# enable fancy indexing
 		fancyindex on;
 		fancyindex_exact_size off;
-
-		# include shared config
-		include /etc/nginx/conf.d/shared.conf;
 
 		# set root directory
 		root /var/www/html/a.shitposter.io;
@@ -65,11 +103,12 @@ http {
 
 	# listen for requests to https://frozenbutthang.com/
 	server {
-		# this nginx vhost is only listening for connections to frozenbutthang.com
 		server_name frozenbutthang.com;
-
-		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
+
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/frozenbutthang.com/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/frozenbutthang.com/privkey.pem;
 
 		# set root directory
 		root /var/www/html/frozenbutthang.com;
@@ -100,13 +139,37 @@ http {
 		}
 	}
 
+	# listen for requests to https://shitposter.io/
+	server {
+		server_name shitposter.io;
+		include /etc/nginx/conf.d/shared.conf;
+
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/shitposter.io/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/shitposter.io/privkey.pem;
+
+		# set root directory
+		root /var/www/html/shitposter.io;
+
+		# disable access logging
+		access_log off;
+
+		# error pages
+		error_page 404 500 502 503 504 /error.html;
+
+		location = /error.html {
+			internal;
+		}
+	}
+
 	# listen for requests to https://justinsinkula.com/
 	server {
-		# this nginx vhost is listening for several domain names
-		server_name justinsinkula.com shitposter.io blaming.me stop.blaming.me;
-
-		# include shared config
+		server_name justinsinkula.com;
 		include /etc/nginx/conf.d/shared.conf;
+
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/justinsinkula.com/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/justinsinkula.com/privkey.pem;
 
 		# set root directory
 		root /var/www/html/justinsinkula.com;
@@ -115,7 +178,7 @@ http {
 		access_log off;
 
 		# error pages
-		error_page 404 502 503 504 /error.html;
+		error_page 404 500 502 503 504 /error.html;
 		
 		location = /error.html {
 			internal;
@@ -140,8 +203,48 @@ http {
 			auth_basic "Restricted access";
 			auth_basic_user_file /etc/nginx/.htpasswd_photos;
 		}
+	}
+	
+	# redirect https://stop.blaming.me/ to https://blaming.me/
+	server {
+		server_name stop.blaming.me;
+		include /etc/nginx/conf.d/shared.conf;
 
-		location /watchme/ {
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/stop.blaming.me/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/stop.blaming.me/privkey.pem;
+
+		# redirect to blaming.me
+		return 301 https://blaming.me$request_uri;
+	}
+
+	# listen for requests to https://blaming.me/
+	server {
+		server_name blaming.me;
+		include /etc/nginx/conf.d/shared.conf;
+
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/blaming.me/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/blaming.me/privkey.pem;
+
+		# set root directory
+		root /var/www/html/blaming.me;
+
+		# disable access logging
+		access_log off;
+
+		# error pages
+		error_page 404 500 502 503 504 /error.html;
+
+		location = /error.html {
+			internal;
+		}
+
+		location = /majora.png {
+			root /var/www/html/blaming.me;
+		}
+
+		location / {
 			# redirect to terminal live stream
 			proxy_pass http://localhost:1338/;
 
@@ -158,22 +261,58 @@ http {
 
 			# disable caches
 			expires 0;
-	
+
+			# a man is not dead while his name is still spoken
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
+		}
+
+		location /df/ {
+			# redirect to dwarf fortress server
+			proxy_pass http://atom.seednode.co:1338/;
+
+			# websockets support
+			proxy_http_version 1.1;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection "Upgrade";
+			proxy_set_header Host $http_host;
+			proxy_cache_bypass $http_upgrade;
+
+			# disable proxy buffering
+			proxy_buffering off;
+			proxy_redirect default;
+
+			# disable caches
+			expires 0;
+
 			# a man is not dead while his name is still spoken
 			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 		}
 	}
-	
-	# listen for requests to https://cdn.seednode.co/
+
+		# redirect https://cdn.seednode.co/ to https://cdn.seedno.de/
+		server {
+			server_name cdn.seednode.co;
+			include /etc/nginx/conf.d/shared.conf;
+
+			# enable LetsEncrypt SSL certs
+			ssl_certificate /etc/letsencrypt/live/cdn.seednode.co/fullchain.pem;
+			ssl_certificate_key /etc/letsencrypt/live/cdn.seednode.co/privkey.pem;
+
+			# redirect to blaming.me
+			return 301 https://cdn.seedno.de$request_uri;
+		}
+
+	# listen for requests to https://cdn.seedno.de/
 	server {
-		# this nginx vhost is only listening for connections to cdn.seednode.co
-		server_name cdn.seednode.co;
-		
-		# include shared config
+		server_name cdn.seedno.de;
 		include /etc/nginx/conf.d/shared.conf;
+
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/cdn.seedno.de/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/cdn.seedno.de/privkey.pem;
 		
 		# set root directory
-		root /var/www/html/cdn.seednode.co;
+		root /var/www/html/cdn.seedno.de;
 
 		# disable access logging
 		access_log off;
@@ -214,13 +353,13 @@ http {
 		}
 	}
 
-	server {		
+	# listen for requests to http://old.blaming.me/
+		server {		
 		# listen on both ipv4 and ipv6
 		listen 80;
 		listen [::]:80;
 				
-		# this nginx vhost is listening for the cleartext cdn
-		server_name old.blaming.me;
+				server_name old.blaming.me;
 
 		# disable gzip to prevent CRIME and other side-channel attacks
 		gzip off;
@@ -273,13 +412,14 @@ http {
 		}
 	}
 
-	# listener for znc control panel
+	# listen to requests for https://znc.shitposter.io/
 	server {
-		# this nginx vhost is only listening for connections to znc.shitposter.io
 		server_name znc.shitposter.io;
-
-		# include shared config
 		include /etc/nginx/conf.d/shared.conf;
+
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/znc.shitposter.io/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/znc.shitposter.io/privkey.pem;
 
 		# forward requests to znc webadmin
 		location / {
