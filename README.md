@@ -1,4 +1,4 @@
 # Sincbox
-Scripts, configuration files, and documentation for my Sincbox hosting.
+Scripts, configuration files, and documentation for my server hosting.
 
-https://seednode.co
+https://seedno.de
