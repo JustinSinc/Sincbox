@@ -3,10 +3,10 @@ upstream thelounge-backend {
         server <ip>:<port>;
 }
 
-upstream tryme-backend {
+upstream try-backend {
         server <ip>:<port>;
 }
 
-upstream watchme-backend {
+upstream watch-backend {
         server <ip>:<port>;
 }
