@@ -5,6 +5,9 @@ listen [::]:443 ssl http2;
 # disable gzip to prevent CRIME and other side-channel attacks
 gzip off;
 
+# disable access logging
+access_log off;
+
 # ssl dh params
 ssl_dhparam ssl/dhparam.pem;
 
@@ -43,9 +46,6 @@ add_header X-Content-Type-Options nosniff;
 # force-enable cross-site scripting protection
 add_header X-XSS-Protection "1; mode=block";
 
-# enable content security policy
-add_header Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline'";
-
 # enable referrer policy
 add_header Referrer-Policy "strict-origin";
 
@@ -55,7 +55,39 @@ add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; mic
 # honour the fallen
 add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 
+# error pages
+error_page 404 500 503 504 /error.html;
+error_page 502 /offline.html;
+
+location = /error.html {
+	alias /var/www/html/shared/error.html;
+}
+
+location = /offline.html {
+	alias /var/www/html/shared/offline.html;
+}
+
 # expose this directory for letsencrypt authentication
 location /.well-known/ {
-        alias /var/www/html/.well-known/;
+	alias /var/www/html/.well-known/;
+}
+
+# set robots.txt
+location = /robots.txt {
+	alias /var/www/html/shared/robots.txt;
+}
+
+# set favicon
+location = /favicon.ico {
+	alias /var/www/html/shared/favicon.ico;
+}
+
+# set profile pic
+location = /seednode.jpg {
+	alias /var/www/html/shared/seednode.jpg;
+}
+
+# set error pic
+location = /keepout.jpg {
+	alias /var/www/html/shared/keepout.jpg;
 }
