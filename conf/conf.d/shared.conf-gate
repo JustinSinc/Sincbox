@@ -59,6 +59,11 @@ add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 error_page 404 500 503 504 /error.html;
 error_page 502 /offline.html;
 
+# set error pic
+location = /keepout.jpg {
+	alias /var/www/html/shared/keepout.jpg;
+}
+
 location = /error.html {
 	alias /var/www/html/shared/error.html;
 }
@@ -85,9 +90,4 @@ location = /favicon.ico {
 # set profile pic
 location = /seednode.jpg {
 	alias /var/www/html/shared/seednode.jpg;
-}
-
-# set error pic
-location = /keepout.jpg {
-	alias /var/www/html/shared/keepout.jpg;
 }
