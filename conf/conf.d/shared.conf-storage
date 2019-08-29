@@ -1,0 +1,59 @@
+# listen on the https port
+listen 443 ssl http2;
+
+# disable gzip to prevent CRIME and other side-channel attacks
+gzip off;
+
+# set cache expiration times based on the mappings above
+expires $expires;
+
+# strip .html extensions
+rewrite ^(/.+)/.html$ $scheme://$host$1 permanent;
+
+# ssl dhparams
+ssl_dhparam ssl/dhparam.pem;
+
+# oscp stapling
+ssl_stapling on;
+ssl_stapling_verify on;
+
+# disable insecure SSL implementations and ciphers
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_prefer_server_ciphers on;
+ssl_ecdh_curve secp384r1;
+ssl_ciphers 'AES256+EECDH:AES256+EDH:!aNULL';
+
+# disable ssl session tickets to ensure perfect forward secrecy
+ssl_session_cache shared:ssl_session_cache:10m;
+ssl_session_timeout 1m;
+ssl_session_tickets off;
+
+# enable http strict transport security (hsts)
+add_header Strict-Transport-Security "max-age=63072000; preload" always;
+
+# allow caching to disk
+add_header Cache-Control "public";
+
+# report cache status
+add_header X-Cache-Status $upstream_cache_status;
+
+# block clickjacking attacks
+add_header X-Frame-Options DENY;
+
+# disable content-type sniffing
+add_header X-Content-Type-Options nosniff;
+
+# force-enable cross-site scripting protection
+add_header X-XSS-Protection "1; mode=block";
+
+# enable content security policy
+add_header Content-Security-Policy "default-src https://storage.seedno.de; style-src 'unsafe-inline'";
+
+# enable referrer policy
+add_header Referrer-Policy "strict-origin";
+
+# enable feature policy
+add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'none'; fullscreen 'self'; payment 'none'";
+
+# a man is not dead while his name is still spoken
+add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
