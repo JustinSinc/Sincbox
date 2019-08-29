@@ -14,8 +14,9 @@ worker_processes auto;
 pid /run/nginx.pid;
 
 # set the maximum number of simultaneous connections
+# since this is a proxy server, this is set higher than default
 events {
-	worker_connections 768;
+	worker_connections 2048;
 }
 
 # configuration for the webserver itself
@@ -26,6 +27,19 @@ http {
 	# limit simultaneous connections to protect against slowloris attacks
 	limit_conn_zone $binary_remote_addr zone=addr:10m;
 	limit_conn addr 64;
+
+	# cache by hostname and uri pair
+	proxy_cache_key "$scheme$request_method$host$request_uri";
+
+	# only cache these http methods
+	proxy_cache_methods GET HEAD;
+
+	# include upstream servers from file
+	include /etc/nginx/conf.d/upstream.conf;
+
+	# extend proxy timeout time to prevent issues with proxied websockets connections
+	proxy_read_timeout 120s;
+	proxy_send_timeout 120s;
 
 	# tell nginx what sort of content we'll be displaying
 	include mime.types;
@@ -43,6 +57,16 @@ http {
 		
 		# rewrite url
 		return 301 https://$host$request_uri;
+	}
+
+	# redirect http://seednode.co/ to https://seedno.de/
+	server {
+		listen 80;
+		listen [::]:80;
+		server_name seednode.co seedno.de;
+
+		# rewrite url
+		return 301 https://seedno.de/;
 	}
 
 	# redirect http://cdn.seednode.co/ to https://cdn.seedno.de/
@@ -77,6 +101,143 @@ http {
 		# rewrite url
 		return 301 https://unifi.seedno.de$request_uri;
 	}
+
+	# redirect https://seednode.co/ to https://seedno.de/
+	server {
+		server_name seednode.co;
+		include /etc/nginx/conf.d/shared.conf;
+
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/seednode.co/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/seednode.co/privkey.pem;
+
+		# rewrite url
+		return 301 https://seedno.de$request_uri;
+	}
+
+	# listen for requests to https://seedno.de/
+	server {
+		server_name seedno.de;
+		include /etc/nginx/conf.d/shared.conf;
+
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/seedno.de/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/seedno.de/privkey.pem;
+
+		# try serving files locally; if they don't exist, serve landing page
+		location / {
+			# hide .html extension
+			rewrite ^(/.*)\.html(\?.*)?$ $1$2 permanent;
+			
+			# hide trailing slash
+			rewrite ^/(.*)/$ /$1 permanent;
+			
+			# serve landing page
+			index index.html;
+
+			# serve landing page, requesting html document, then uri, in that order
+			# otherwise 404
+			try_files $uri/index.html $uri.html $uri/ $uri =404;
+
+			# serve files from local web directory
+			root /var/www/html/seedno.de;
+
+			# allow caching of static files
+			expires max;
+		}
+
+		location /stats/ {
+			# require credentials
+			auth_basic "You shall not pass!";
+			auth_basic_user_file .htpasswd.stats;
+
+			# hide .html extension
+			rewrite ^(/.*)\.html(\?.*)?$ $1$2 permanent;
+
+			# serve landing page, requesting html document, then uri, in that order
+			# otherwise 404
+			try_files $uri.html $uri/ $uri =404;
+
+			# serve files from local web directory
+			root /var/www/html;
+
+			# enable fancy indexing
+			fancyindex on;
+			fancyindex_exact_size off;
+			fancyindex_ignore .png;
+		}	
+
+		location /try/ {
+			# pass requests to docker container demo
+			proxy_pass http://try-backend/;
+
+			# security headers
+			add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+			add_header X-Frame-Options DENY;
+			add_header X-Content-Type-Options nosniff;
+			add_header X-XSS-Protection "1; mode=block";
+			add_header Content-Security-Policy "default-src https://seedno.de; connect-src wss://seedno.de/try/ws; style-src 'unsafe-inline'; media-src 'self' data:";
+			add_header Referrer-Policy "strict-origin";
+			add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'self'; fullscreen 'self'; payment 'none'";
+			
+			# gotty proxying support
+			proxy_buffering off;
+			proxy_redirect default;
+			proxy_http_version 1.1;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection "Upgrade";
+			proxy_set_header Host $http_host;
+			proxy_cache_bypass $http_upgrade;
+
+			# disable caches
+			expires 0;
+
+			# honour the fallen
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;	
+		}
+
+		location /watch/ {
+			# pass requests to terminal broadcast
+			proxy_pass http://watch-backend/;
+
+			# security headers
+			add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+			add_header X-Frame-Options DENY;
+			add_header X-Content-Type-Options nosniff;
+			add_header X-XSS-Protection "1; mode=block";
+			add_header Content-Security-Policy "default-src https://seedno.de; connect-src wss://seedno.de/watch/ws; style-src https://seedno.de 'unsafe-inline'; media-src 'self' data:";
+			add_header Referrer-Policy "strict-origin";
+			add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'self'; fullscreen 'self'; payment 'none'";
+
+			# gotty proxying support
+			proxy_buffering off;
+			proxy_redirect default;
+			proxy_http_version 1.1;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection "Upgrade";
+			proxy_set_header Host $http_host;
+			proxy_cache_bypass $http_upgrade;
+
+			# disable caches
+			expires 0;
+
+			# honour the fallen
+			add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
+		}
+	}
+
+	# listen for requests to https://unifi.seedno.de/
+	server {
+		server_name unifi.seedno.de;
+		include /etc/nginx/conf.d/shared.conf;
+
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/unifi.seedno.de/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/unifi.seedno.de/privkey.pem;
+
+		# forward to unifi controller
+		return 301 https://unifi.seedno.de:8443/;
+	}	
 
 	# listen for requests to https://a.shitposter.io/
 	server {
@@ -113,16 +274,6 @@ http {
 		# set root directory
 		root /var/www/html/frozenbutthang.com;
 
-		# disable access logging
-		access_log off;
-
-		# error pages
-		error_page 404 502 503 504 /error.html;
-
-		location = /error.html {
-			internal;
-		}
-
 		location = / {
 			# hide .html extension
 			rewrite ^(/.*)\.html(\?.*)?$ $1$2 permanent;
@@ -150,16 +301,6 @@ http {
 
 		# set root directory
 		root /var/www/html/shitposter.io;
-
-		# disable access logging
-		access_log off;
-
-		# error pages
-		error_page 404 500 502 503 504 /error.html;
-
-		location = /error.html {
-			internal;
-		}
 	}
 
 	# listen for requests to https://justinsinkula.com/
@@ -173,30 +314,6 @@ http {
 
 		# set root directory
 		root /var/www/html/justinsinkula.com;
-
-		# disable access logging
-		access_log off;
-
-		# error pages
-		error_page 404 500 502 503 504 /error.html;
-		
-		location = /error.html {
-			internal;
-		}
-
-		location = /grandip {
-			default_type text/plain;
-		}
-
-		location /gmn/ {
-			# require login
-			auth_basic "Restricted access";
-			auth_basic_user_file /etc/nginx/.htpasswd_gmn;
-
-			# enable fancy indexing
-			fancyindex on;
-			fancyindex_exact_size off;
-		}
 
 		location /pics/ {
 			# require login
@@ -229,25 +346,6 @@ http {
 
 		# set root directory
 		root /var/www/html/blaming.me;
-
-		# disable access logging
-		access_log off;
-
-		# error pages
-		error_page 404 /error.html;
-		error_page 500 502 503 504 /error.html;
-
-		location = /error.html {
-			internal;
-		}
-
-		location = /offline.html {
-			internal;
-		}
-
-		location = /seednode.png {
-			root /var/www/html/blaming.me;
-		}
 
 		location / {
 			# redirect to terminal live stream
@@ -294,18 +392,18 @@ http {
 		}
 	}
 
-		# redirect https://cdn.seednode.co/ to https://cdn.seedno.de/
-		server {
-			server_name cdn.seednode.co;
-			include /etc/nginx/conf.d/shared.conf;
+	# redirect https://cdn.seednode.co/ to https://cdn.seedno.de/
+	server {
+		server_name cdn.seednode.co;
+		include /etc/nginx/conf.d/shared.conf;
 
-			# enable LetsEncrypt SSL certs
-			ssl_certificate /etc/letsencrypt/live/cdn.seednode.co/fullchain.pem;
-			ssl_certificate_key /etc/letsencrypt/live/cdn.seednode.co/privkey.pem;
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/cdn.seednode.co/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/cdn.seednode.co/privkey.pem;
 
-			# redirect to blaming.me
-			return 301 https://cdn.seedno.de$request_uri;
-		}
+		# redirect to blaming.me
+		return 301 https://cdn.seedno.de$request_uri;
+	}
 
 	# listen for requests to https://cdn.seedno.de/
 	server {
@@ -318,16 +416,6 @@ http {
 		
 		# set root directory
 		root /var/www/html/cdn.seedno.de;
-
-		# disable access logging
-		access_log off;
-
-		# error pages
-		error_page 404 502 503 504 /error.html;
-
-		location = /error.html {
-			internal;
-		}
 
 		# these file types are typically static and can be cached long-term
 		location ~* \.(?:jpg|jpeg|gif|png|ico|gz|svg|svgz|mp4|ogg|ogv|webm|pdf)$ {
@@ -359,39 +447,18 @@ http {
 	}
 
 	# listen for requests to http://old.blaming.me/
-		server {		
+	server {		
 		# listen on both ipv4 and ipv6
 		listen 80;
 		listen [::]:80;
 				
-				server_name old.blaming.me;
+		server_name old.blaming.me;
 
 		# disable gzip to prevent CRIME and other side-channel attacks
 		gzip off;
 
-		# block clickjacking attacks
-		add_header X-Frame-Options DENY;
-
-		# disable content-type sniffing
-		add_header X-Content-Type-Options nosniff;
-
-		# force-enable cross-site scripting protection
-		add_header X-XSS-Protection "1; mode=block";
-
-		# enable content security policy
-		add_header Content-Security-Policy "default-src http://old.blaming.me";
-
-		# enable referrer policy
-		add_header Referrer-Policy "strict-origin";
-
-		# enable feature policy
-		add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'none'; fullscreen 'self'; payment 'none'";
-
-		# honour the fallen
-		add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
-
 		# set root directory
-		root /var/www/html/cdn.seednode.co/pics;
+		root /var/www/html/cdn.seedno.de/pics;
 
 		# disable access logging
 		access_log off;
@@ -416,6 +483,23 @@ http {
 			try_files $uri $uri/index.html $uri.html $uri/ =404;
 		}
 	}
+
+	# listen for requests to http://keep.blaming.me/
+	server {
+		# listen on ipv4 only
+		listen 80;
+
+		server_name keep.blaming.me;
+
+		# disable gzip to prevent CRIME and other side-channel attacks
+		gzip off;
+
+		# set root directory
+		root /var/www/html/keep.blaming.me;
+	
+		# disable access logging
+		access_log off;
+	}		
 
 	# listen to requests for https://znc.shitposter.io/
 	server {
