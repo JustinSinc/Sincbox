@@ -45,7 +45,7 @@ http {
 		return 301 https://$host$request_uri;
 	}
 
-	# redirect http://cdn.seednode.co to https://cdn.seedno.de
+	# redirect http://cdn.seednode.co/ to https://cdn.seedno.de/
 	server {
 		listen 80;
 		listen [::]:80;
