@@ -3,8 +3,9 @@
 # requires nginx, php7.0-fpm, php7.0-cli, php7.0-cgi, wget
 # place _h5ai in /storage
 
-## example certbot command to generate dhparams and letsencrypt certs for this site
+##  example certbot command to generate dhparams and letsencrypt certs for this site
 # $ openssl dhparam -out /etc/nginx/ssl/dhparam.pem 4096
+# $ sudo certbot certonly --webroot -w /storage --rsa-key-size 4096 -d storage.seedno.de --must-staple --hsts --uir --agree-tos
 # $ sudo certbot certonly --webroot -w /storage --rsa-key-size 4096 -d storage.seednode.co --must-staple --hsts --uir --agree-tos
 
 # run nginx as the www-data user
@@ -28,16 +29,16 @@ http {
 
 	# display cache hit rate in access logs
 	log_format	'$remote_addr - $remote_user [$time_local]'
-			'"$request" $status $body_bytes_sent'
-			'"$http_referer" "$http_user_agent" "$upstream_cache_status"';
+				'"$request" $status $body_bytes_sent'
+				'"$http_referer" "$http_user_agent" "$upstream_cache_status"';
 
 	# set cache expiration times by content type
 	map $sent_http_content_type $expires {
-		default				off;
-		text/html			epoch;
-		text/css			max;
-		application/javascript		max;
-		~image/				max;
+		default					off;
+		text/html				epoch;
+		text/css				max;
+		application/javascript	max;
+		~image/					max;
 	}
 
 	# cache commonly-accessed files to ssd
@@ -49,79 +50,40 @@ http {
 	proxy_send_timeout 120s;
 
 	# tell nginx what sort of content we'll be displaying
-	include			mime.types;
-	default_type		application/octet-stream;
-	sendfile		on;
+	include	   mime.types;
+	default_type  application/octet-stream;
+	sendfile	  on;
 
 	# redirect all non-HTTPS requests to HTTPS
 	server {
 		listen 80;
-		server_name storage.seednode.co;
-		return 301 https://$host$request_uri;
+		server_name storage.seednode.co storage.seedno.de;
+		return 301 https://storage.seedno.de$request_uri;
 	}
 
-	# listen for requests to https://storage.seednode.co/ and its subdirectories
 	server {
-		# listen on the https port
-		listen 443 ssl http2;
-
-		# disable gzip to prevent CRIME and other side-channel attacks
-		gzip off;
-
-		# this nginx vhost is listening for only one domain
-		server_name storage.seednode.co;
-
-		# set cache expiration times based on the mappings above
-		expires $expires;
-
-		# strip .html extensions
-		rewrite ^(/.+)/.html$ $scheme://$host$1 permanent;
+		# include shared config
+		include /etc/nginx/conf.d/shared.conf;
 
 		# enable LetsEncrypt SSL certs
 		ssl_certificate /etc/letsencrypt/live/storage.seednode.co/fullchain.pem;
 		ssl_certificate_key /etc/letsencrypt/live/storage.seednode.co/privkey.pem;
-		ssl_dhparam ssl/dhparam.pem;
-		
-		# disable insecure SSL implementations and ciphers
-		ssl_protocols TLSv1.2 TLSv1.3;
-		ssl_prefer_server_ciphers on;
-		ssl_ecdh_curve secp384r1;
-		ssl_ciphers 'AES256+EECDH:AES256+EDH:!aNULL';
 
-		# disable ssl session tickets to ensure perfect forward secrecy
-		ssl_session_cache shared:ssl_session_cache:10m;
-		ssl_session_timeout 1m;
-		ssl_session_tickets off;
+		server_name storage.seednode.co;
+		return 301 https://storage.seedno.de$request_uri;
+	}
 
-		# enable http strict transport security (hsts)
-		add_header Strict-Transport-Security "max-age=63072000; preload" always;
+	# listen for requests to https://storage.seedno.de/ and its subdirectories
+	server {
+		# include shared config
+		include /etc/nginx/conf.d/shared.conf;
 
-		# allow caching to disk
-		add_header Cache-Control "public";
-	
-		# report cache status
-		add_header X-Cache-Status $upstream_cache_status;
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/storage.seedno.de/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/storage.seedno.de/privkey.pem;
 
-		# block clickjacking attacks
-		add_header X-Frame-Options DENY;
-
-		# disable content-type sniffing
-		add_header X-Content-Type-Options nosniff;
-
-		# force-enable cross-site scripting protection
-		add_header X-XSS-Protection "1; mode=block";
-
-		# enable content security policy
-		add_header Content-Security-Policy "default-src https://storage.seednode.co; style-src 'unsafe-inline'";
-
-		# enable referrer policy
-		add_header Referrer-Policy "strict-origin";
-
-		# enable feature policy
-		add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'none'; fullscreen 'self'; payment 'none'";
-
-		# a man is not dead while his name is still spoken
-		add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
+		# this nginx vhost is listening for only one domain
+		server_name storage.seedno.de;
 
 		# set root directory
 		root /storage;
@@ -169,3 +131,4 @@ http {
 			auth_basic "off";
 		}
 	}
+}
