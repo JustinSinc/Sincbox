@@ -21,7 +21,7 @@ declare -a domains=("domain1" "domain2")
 
 # generate a certificate for each domain
 for domain in "${domains[@]}"; do
-        sudo certbot-auto certonly --webroot -w /var/www/html --rsa-key-size 2048 -d "$domain" --hsts --uir --agree-tos
+	sudo certbot-auto certonly --webroot -w /var/www/html -n --rsa-key-size 4096 -d "$domain" --hsts --uir --must-staple --agree-tos
 done
 
 # end function
