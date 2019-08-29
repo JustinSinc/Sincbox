@@ -3,10 +3,9 @@
 # requires nginx-rtmp-module (https://github.com/arut/nginx-rtmp-module)
 # requires ngx-fancyindex (https://github.com/aperezdc/ngx-fancyindex)
 
-## example certbot command to generate dhparams and letsencrypt certs for this site
+##  example certbot command to generate dhparams and letsencrypt certs for this site
 # $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
 # $ wget https://dl.eff.org/certbot-auto && chmod a+x certbot-auto
-# $ sudo ./certbot-auto certonly --webroot -w /var/www/html --rsa-key-size 2048 -d watch.seednode.co --hsts --uir --agree-tos
 
 # run nginx as the www-data user
 user www-data;
@@ -48,64 +47,31 @@ http {
 	server {
 		listen 80;
 		listen [::]:80;
-		server_name watch.seednode.co;
-		return 301 https://$host$request_uri;
+		server_name watch.seednode.co watch.seedno.de;
+		return 301 https://watch.seedno.de$request_uri;
 	}
 
-	# listener for hls streams
+	# redirect https://watch.seednode.co/ to https://watch.seedno.de/
 	server {
-		# this nginx vhost is only listening for connections to watch.seednode.co
 		server_name watch.seednode.co;
-
-		# listen on both ipv4 and ipv6
-		listen 443 ssl http2;
-		listen [::]:443 ssl http2;
-
-		# disable gzip to prevent CRIME and other side-channel attacks
-		gzip off;
+		include /etc/nginx/conf.d/shared.conf;
 
 		# enable LetsEncrypt SSL certs
 		ssl_certificate /etc/letsencrypt/live/watch.seednode.co/fullchain.pem;
 		ssl_certificate_key /etc/letsencrypt/live/watch.seednode.co/privkey.pem;
-		ssl_dhparam ssl/dhparam.pem;
 
-		# disable insecure SSL implementations and ciphers
-		ssl_protocols TLSv1.2 TLSv1.3;
-		ssl_prefer_server_ciphers on;
-		ssl_ecdh_curve secp384r1;
-		ssl_ciphers 'TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES-256-GCM-SHA384:EECDH+CHACHA20:AES256+EECDH:AES256+EDH:!aNULL';
+		# rewrite url
+		return 301 https://watch.seedno.de$request_uri;
+	}
 
-		# disable ssl session tickets to ensure perfect forward secrecy
-		ssl_session_cache shared:SSL:10m;
-		ssl_session_timeout 10m;
-		ssl_session_tickets off;
+	# listens for requests to https://watch.seedno.de/
+	server {
+		server_name watch.seedno.de;
+		include /etc/nginx/conf.d/shared.conf;
 
-		# disable cache
-		add_header 'Cache-Control' 'no-cache';
-
-		# enable http strict transport security (hsts)
-		add_header Strict-Transport-Security "max-age=63072000; preload" always;
-
-		# block clickjacking attacks
-		add_header X-Frame-Options DENY;
-
-		# disable content-type sniffing
-		add_header X-Content-Type-Options nosniff;
-
-		# enable cross-site scripting protection
-		add_header X-XSS-Protection "1; mode=block";
-
-		# enable content security policy
-		add_header Content-Security-Policy "default-src https://watch.seednode.co; style-src 'unsafe-inline'";
-
-		# enable referrer policy
-		add_header Referrer-Policy "strict-origin";
-		
-		# enable feature policy
-		add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'none'; fullscreen 'self'; payment 'none'";
-
-		# honour the fallen
-		add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/watch.seedno.de/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/watch.seedno.de/privkey.pem;
 
 		# enable fancy indexing
 		fancyindex on;
@@ -113,19 +79,6 @@ http {
 
 		# don't index files ending in .html
 		fancyindex_ignore .html .log;
-
-		# expose this directory for letsencrypt authentication
-		location /.well-known/ {
-			alias /var/www/html/.well-known/;
-		}
-
-		# error pages
-		error_page 404 502 503 504 /error.html;
-
-		location = /error.html {
-			root /var/www/html;
-			internal;
-		}
 
 		# serve hls.js player for web playback
 		location / {
