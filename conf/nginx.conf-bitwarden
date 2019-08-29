@@ -1,5 +1,6 @@
 # /etc/nginx/nginx.conf
-# for use as a reverse proxy
+# a basic nginx config file
+# for use as a bitwarden reverse proxy
 # with bitwarden-rs (https://github.com/mprasil/bitwarden_rs)
 
 ## bitwarden will: ##
@@ -16,20 +17,20 @@
 # $ sudo mkdir -p /bw-data
 
 # launch bitwarden-rs
-# $ sudo docker run -d 	--name bitwarden \
-#			--restart always \
-#			--user 1001 \
-#			-e DOMAIN=https://<your_domain_here> \
-#                       -e WEBSOCKET_ENABLED=true \
-#                       -e SIGNUPS_ALLOWED=false \
-#                       -e INVITATIONS_ALLOWED=false \
-#                       -e SHOW_PASSWORD_HINT=false \
-#                       -e LOG_FILE=/data/bitwarden.log \
-#                       -e ROCKET_PORT=8080 \
-#                       -v /bw-data/:/data/ \
-#                       -p 8080:8080 \
-#                       -p 3012:3012 \
-#                       mprasil/bitwarden:latest
+# $ sudo docker run -d	--name bitwarden \
+#						--restart always \
+#						--user 1001 \
+#						-e DOMAIN=https://<your_domain_here> \
+#						-e WEBSOCKET_ENABLED=true \
+#						-e SIGNUPS_ALLOWED=false \
+#						-e INVITATIONS_ALLOWED=false \
+#						-e SHOW_PASSWORD_HINT=false \
+#						-e LOG_FILE=/data/bitwarden.log \
+#						-e ROCKET_PORT=8080 \
+#						-v /bw-data/:/data/ \
+#						-p 8080:8080 \
+#						-p 3012:3012 \
+#						mprasil/bitwarden:latest
 
 ## updating bitwarden ##
 # pull the latest version of the container
@@ -40,13 +41,10 @@
 # $ docker rm bitwarden
 # then run the launch command again
 
-## generate letsencrypt cert ##
-# $ sudo mkdir -p /etc/nginx/ssl
+## example certbot command to generate dhparams and letsencrypt certs for this site
 # $ sudo openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
 # $ wget https://dl.eff.org/certbot-auto && chmod a+x certbot-auto
-# $ sudo certbot certonly --webroot -w /var/www/html --rsa-key-size 4096 -d <your_domain_here> --hsts --uir --agree-tos --redirect
 
-## begin nginx config ##
 # run nginx as unprivileged user www-data
 user www-data; 
 
@@ -54,9 +52,8 @@ user www-data;
 worker_processes auto;
 
 # set the maximum number of simultaneous connections
-# since this is a proxy server, this is set higher than default
 events {
-	worker_connections 2048;
+	worker_connections 768;
 }
 
 # configuration for the web server itself
@@ -90,67 +87,31 @@ http {
 	server {
 		listen 80;
 		listen [::]:80;
-		server_name <your_domain_here>;
-		return 301 https://$host$request_uri;
+		server_name bw.seedno.de bw.seednode.co;
+		return 301 https://bw.seedno.de$request_uri;
 	}
 
+	# redirect https://bw.seednode.co/ to https://bw.seedno.de/
 	server {
-		# listen on the https port
-		listen 443 ssl http2;
-		listen [::]:443 ssl http2;
-
-		# disable gzip to prevent CRIME and other side-channel attacks
-		gzip off;
+		server_name bw.seednode.co;
+		include /etc/nginx/conf.d/shared.conf;
 
 		# enable LetsEncrypt SSL certs
-		ssl_certificate /etc/letsencrypt/live/<your_domain_here>/fullchain.pem;
-		ssl_certificate_key /etc/letsencrypt/live/<your_domain_here>/privkey.pem;
-		ssl_dhparam ssl/dhparam.pem;
+		ssl_certificate /etc/letsencrypt/live/bw.seednode.co/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/bw.seednode.co/privkey.pem;
+	
+		# rewrite url
+		return 301 https://bw.seedno.de/;
+	}
 
-		# establish a new TLS connection for upstream servers
-		proxy_ssl_session_reuse off;
+	# listen for requests to https://bw.seedno.de/
+	server {
+		server_name bw.seedno.de;
+		include /etc/nginx/conf.d/shared.conf;
 
-		# enable oscp stapling
-		ssl_stapling on;
-		ssl_stapling_verify on;
-		resolver 8.8.8.8;
-
-		# disable insecure SSL implementations and ciphers
-		ssl_protocols TLSv1.3 TLSv1.2;
-		ssl_prefer_server_ciphers on;
-		ssl_ecdh_curve secp384r1;
-		ssl_ciphers 'TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES-256-GCM-SHA384:EECDH+CHACHA20:AES256+EECDH:AES256+EDH:!aNULL';
-
-		# disable ssl session tickets to ensure perfect forward secrecy
-		ssl_session_cache shared:ssl_session_cache:10m;
-		ssl_session_timeout 10m;
-		ssl_session_tickets off;
-
-		# honour the fallen
-		add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
-
-		# enable http strict transport security (HSTS)
-		add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
-
-		# block clickjacking attacks
-		add_header X-Frame-Options DENY;
-
-		# disable content-type sniffing
-		add_header X-Content-Type-Options nosniff;
-
-		# force-enable cross-site scripting protection
-		add_header X-XSS-Protection "1; mode=block";
-
-		# this vhost is only listening for connections to <your_domain_here>
-		server_name <your_domain_here>;
-
-		# allow large attachments
-		client_max_body_size 128M;
-
-		# expose this directory for letsencrypt authentication
-		location /.well-known/ {
-			alias /var/www/html/.well-known/;
-		}
+		# enable LetsEncrypt SSL certs
+		ssl_certificate /etc/letsencrypt/live/bw.seedno.de/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/bw.seedno.de/privkey.pem;
 
 		# serve bitwarden webvault
 		location / {
