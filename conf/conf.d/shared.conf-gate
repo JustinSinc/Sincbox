@@ -55,21 +55,29 @@ add_header Feature-Policy "geolocation 'none'; midi 'none'; sync-xhr 'none'; mic
 # honour the fallen
 add_header X-Clacks-Overhead "GNU Terry Pratchett" always;
 
+# unavailable upstream results in 504 error
+proxy_next_upstream error timeout http_504;
+
 # error pages
-error_page 404 500 503 504 /error.html;
-error_page 502 /offline.html;
+error_page 404 /404.html;
+error_page 500 /500.html;
+error_page 502 /502.html;
+error_page 504 /504.html;
 
-# set error pic
-location = /keepout.jpg {
-	alias /var/www/html/shared/keepout.jpg;
+location = /404.html {
+	alias /var/www/html/shared/404.html;
 }
 
-location = /error.html {
-	alias /var/www/html/shared/error.html;
+location = /500.html {
+	alias /var/www/html/shared/500.html;
 }
 
-location = /offline.html {
-	alias /var/www/html/shared/offline.html;
+location = /502.html {
+	alias /var/www/html/shared/502.html;
+}
+
+location = /504.html {
+	alias /var/www/html/shared/504.html;
 }
 
 # expose this directory for letsencrypt authentication
@@ -90,4 +98,9 @@ location = /favicon.ico {
 # set profile pic
 location = /seednode.jpg {
 	alias /var/www/html/shared/seednode.jpg;
+}
+
+# set opengraph logo
+location = /logo.jpg {
+	alias /var/www/html/shared/logo.jpg;
 }
