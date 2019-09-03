@@ -40,8 +40,8 @@ http {
 	# include upstream servers from file
 	include /etc/nginx/conf.d/upstream.conf;
 
-	# timeout proxy after 3 seconds
-	proxy_connect_timeout 3s;
+	# timeout proxy after 2 seconds
+	proxy_connect_timeout 2s;
 
 	# extend proxy timeout time to prevent issues with proxied websockets connections
 	proxy_read_timeout 120s;
