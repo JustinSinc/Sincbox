@@ -9,6 +9,15 @@
 # fail in a sane manner
 set -euo pipefail
 
+# error out if the wireguard kernel module doesn't exist
+if $(lsmod | grep wireguard 2>&1 >/dev/null); then
+	return
+else
+	echo -e "\nPlease install the Wireguard kernel module by following the instructions"
+	echo -e "available at https://www.wireguard.com/install/ before running this script\n"
+	exit 1
+fi
+
 # set wan interface name
 wan_interface="eth0"
 
