@@ -2,6 +2,10 @@
 ## script to set up a basic wireguard server
 # must be run as root or with sudo
 
+## Pre-requisites: ##
+# install wireguard according to the instructions available at
+# https://www.wireguard.com/install/
+
 # fail in a sane manner
 set -euo pipefail
 
@@ -19,9 +23,6 @@ subnetv4="10.0.0"
 maskv4="24"
 subnetv6="fdab:1a11:7de6:5b40"
 maskv6="64"
-
-# install wireguard according to the instructions available at
-# https://www.wireguard.com/install/
 
 # generate keys for wireguard server
 umask 077
