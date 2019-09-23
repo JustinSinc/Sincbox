@@ -20,14 +20,8 @@ maskv4="24"
 subnetv6="fdab:1a11:7de6:5b40"
 maskv6="64"
 
-# install prerequisites
-apt update && apt install software-properties-common
-
-# add the wireguard repository
-add-apt-repository ppa:wireguard/wireguard
-
-# update packages and install wireguard
-apt update && apt install wireguard wireguard-dkms wireguard-tools
+# install wireguard according to the instructions available at
+# https://www.wireguard.com/install/
 
 # generate keys for wireguard server
 umask 077
