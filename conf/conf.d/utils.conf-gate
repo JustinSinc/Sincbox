@@ -1,0 +1,6 @@
+# display requester's ip address
+location = /ip {
+	access_log off;
+	default_type text/plain;
+	return 200 $remote_addr;
+}
