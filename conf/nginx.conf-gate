@@ -46,6 +46,7 @@ http {
 
 	# tell nginx what sort of content we'll be displaying
 	include mime.types;
+	charset UTF-8;
 	default_type application/octet-stream;
 	sendfile on;
 
