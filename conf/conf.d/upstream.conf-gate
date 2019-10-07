@@ -1,12 +1,46 @@
-# upstream servers
-upstream watch-backend {
-	server <ip>:<port>;
+# upstream servers for gotty
+upstream atom-try {
+        server <ip>:<port>;
 }
 
-upstream try-backend {
-	server <ip>:<port>;
+upstream atom-watch {
+        server <ip>:<port>;
 }
 
-upstream df-backend {
-	server <ip>:<port>;
+upstream gate-watch {
+        server <ip>:<port>;
+}
+
+upstream storage-watch {
+        server <ip>:<port>;
+}
+
+upstream virt-watch {
+        server <ip>:<port>;
+}
+
+upstream wall-watch {
+        server <ip>:<port>;
+}
+
+# upstream backends for laptop fileshare
+upstream laptop-files {
+        server <ip>:<port>;
+        server <ip>:<port> backup;
+}
+
+# upstream backends for desktop fileshare
+upstream desktop-files {
+        server <ip>:<port>;
+}
+
+# upstream backends for phone fileshare
+upstream phone-files {
+        server <ip>:<port>;
+}
+
+# upstream backends for netdata
+upstream netdata {
+        server 127.0.0.1:19999;
+        keepalive 64;
 }
