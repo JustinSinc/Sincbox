@@ -1,0 +1,52 @@
+## /etc/nginx/nginx.conf
+# a basic nginx config file for my personal site
+
+# run nginx as the www-data user
+user www-data;
+
+# set the number of workers equal to the cpu count
+worker_processes auto;
+
+# set the pid file location
+pid /run/nginx.pid;
+
+# set the maximum number of simultaneous connections
+# since this is a proxy server, this is set higher than default
+events {
+        worker_connections 2048;
+}
+
+# configuration for the webserver itself
+http {
+        # use proxy errors instead of backend
+        proxy_intercept_errors on;
+
+        # limit simultaneous connections to protect against slowloris attacks
+        limit_conn_zone $binary_remote_addr zone=addr:10m;
+        limit_conn addr 64;
+
+        # cache by hostname and uri pair
+        proxy_cache_key "$scheme$request_method$host$request_uri";
+
+        # only cache these http methods
+        proxy_cache_methods GET HEAD;
+
+        # include all vhosts
+        include /etc/nginx/sites-enabled/*;
+
+        # timeout proxy after 2 seconds
+        proxy_connect_timeout 2s;
+
+        # extend proxy timeout time to prevent issues with proxied websockets connections
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+
+        # tell nginx what sort of content we'll be displaying
+        include mime.types;
+        charset UTF-8;
+        default_type application/octet-stream;
+        sendfile on;
+
+        # set the default index file
+        index index.html;
+}
