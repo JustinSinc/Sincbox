@@ -1,0 +1,52 @@
+# listener for incoming rtmp feeds
+rtmp {
+        server {
+                # listen on the default port
+                listen 1935;
+
+                # send 500ms chunks of video
+                chunk_size 4096;
+
+                # create an application named `live`
+                application live {
+                        # enables one-to-many broadcasting
+                        live on;
+
+                        # enables http live streaming
+                        hls on;
+
+                        # sets path for hls fragments and playslists
+                        hls_path /var/www/html/live/;
+
+                        # place streams in their own subdirectories
+                        hls_nested on;
+
+                        # allow stream resumption in the case of brief network loss
+                        hls_continuous on;
+
+                        # align fragment slicing to timestamps to allow reproducible fragmentation
+                        hls_fragment_slicing aligned;
+
+                        # set fragment length to 10 seconds
+                        hls_fragment 500ms;
+
+                        # remove old fragments and playlists
+                        hls_cleanup off;
+
+                        # set playlist length
+                        hls_playlist_length 6h;
+
+                        # generate an index file for the stream
+                        exec_publish /usr/bin/hls-playlist $name;
+
+                        # create an hls.js player for the stream
+                        exec_publish_done /usr/bin/hls-livestream $name;
+
+                        # allow streaming from my subnets
+                        allow publish all;
+
+                        # only allow playback via hls
+                        deny play all;
+                }
+        }
+}
