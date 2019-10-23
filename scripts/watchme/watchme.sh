@@ -6,13 +6,10 @@
 # export PATH=$PATH:$GOPATH/bin
 
 ## Reload your shell config (replace .bashrc with the config file for your shell of choice)
-# $ source ~/.bashrc  
+# $ source ~/.zshrc
 
 ## then download GoTTY:
-# $ wget -qO- https://github.com/yudai/gotty/releases/download/v1.0.1/gotty_linux_amd64.tar.gz | tar xvz -C $HOME/go/bin
-
-## sample nginx config stanza can be found at 
-# https://github.com/JustinSinc/Sincbox/blob/master/scripts/watchme/nginx_watchme.conf
+# $ wget -qO- https://github.com/yudai/gotty/releases/download/v1.0.1/gotty_linux_amd64.tar.gz | tar xvz -C $HOME/go/bin/
 
 # set listen port for gotty
 port="1338"
@@ -20,7 +17,7 @@ port="1338"
 # spawn new GoTTY session in a tmux session named "watchme"
 tmux has-session -t watchme || tmux new-session -d -s watchme
 
-# disable automatic renaming 
+# disable automatic renaming
 tmux set-option -g allow-rename off
 
 # only resize the pane if a smaller client is actively looking at it
