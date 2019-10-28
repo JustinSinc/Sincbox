@@ -1,132 +1,30 @@
 ## /etc/nginx/nginx.conf
 # a basic nginx config file for file hosting
 
-##  example certbot command to generate dhparams and letsencrypt certs for this site
-# $ openssl dhparam -out /etc/nginx/ssl/dhparam.pem 4096
-# $ sudo certbot certonly --webroot -w /storage --rsa-key-size 4096 -d storage.seedno.de --must-staple --hsts --uir --agree-tos
-# $ sudo certbot certonly --webroot -w /storage --rsa-key-size 4096 -d storage.seednode.co --must-staple --hsts --uir --agree-tos
-
 # run nginx as the www-data user
 user www-data;
 worker_processes auto;
 
 # set the maximum number of simultaneous connections
 events {
-	worker_connections 2048;
+        worker_connections 2048;
 }
 
 # configuration for the web server itself
 http {
-	# limit simultaneous connections to protect against slowloris attacks
-	limit_conn_zone $binary_remote_addr zone=addr:10m;
-	limit_conn addr 64;
+        # limit simultaneous connections to protect against slowloris attacks
+        limit_conn_zone $binary_remote_addr zone=addr:10m;
+        limit_conn addr 64;
 
-	# create a cache on the ssd
-	proxy_cache_path /webcache levels=1:2 keys_zone=ssd_cache:10m inactive=1h;
-	proxy_cache_key "$scheme$request_method$host$request_uri";
+        # include all vhosts
+        include /etc/nginx/sites-enabled/*;
 
-	# display cache hit rate in access logs
-	log_format	'$remote_addr - $remote_user [$time_local]'
-				'"$request" $status $body_bytes_sent'
-				'"$http_referer" "$http_user_agent" "$upstream_cache_status"';
+        # extend proxy timeout time to prevent issues with proxied websockets connections
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
 
-	# set cache expiration times by content type
-	map $sent_http_content_type $expires {
-		default					off;
-		text/html				epoch;
-		text/css				max;
-		application/javascript	max;
-		~image/					max;
-	}
-
-	# cache commonly-accessed files to ssd
-	proxy_cache ssd_cache;
-	proxy_cache_revalidate on;
-
-	# extend proxy timeout time to prevent issues with proxied websockets connections
-	proxy_read_timeout 120s;
-	proxy_send_timeout 120s;
-
-	# tell nginx what sort of content we'll be displaying
-	include	   mime.types;
-	default_type  application/octet-stream;
-	sendfile	  on;
-
-	# redirect all non-HTTPS requests to HTTPS
-	server {
-		listen 80;
-		server_name storage.seednode.co storage.seedno.de;
-		return 301 https://storage.seedno.de$request_uri;
-	}
-
-	server {
-		# include shared config
-		include /etc/nginx/conf.d/shared.conf;
-
-		# enable LetsEncrypt SSL certs
-		ssl_certificate /etc/letsencrypt/live/storage.seednode.co/fullchain.pem;
-		ssl_certificate_key /etc/letsencrypt/live/storage.seednode.co/privkey.pem;
-
-		server_name storage.seednode.co;
-		return 301 https://storage.seedno.de$request_uri;
-	}
-
-	# listen for requests to https://storage.seedno.de/ and its subdirectories
-	server {
-		# include shared config
-		include /etc/nginx/conf.d/shared.conf;
-
-		# enable LetsEncrypt SSL certs
-		ssl_certificate /etc/letsencrypt/live/storage.seedno.de/fullchain.pem;
-		ssl_certificate_key /etc/letsencrypt/live/storage.seedno.de/privkey.pem;
-
-		# this nginx vhost is listening for only one domain
-		server_name storage.seedno.de;
-
-		# set root directory
-		root /storage;
-
-		# error pages
-		error_page 404 /custom_404.html;
-		
-		location = /custom_404.html {
-			internal;
-		}
-
-		error_page 500 502 503 504 /custom_50x.html;
-
-		location = /custom_50x.html {
-			internal;
-		}
-
-		# require authentication
-		auth_basic "Restricted access";
-		auth_basic_user_file /etc/nginx/.htpasswd;
-
-		# bypass authentication for letsencrypt validation
-		location /.well-known/ {
-			auth_basic "off";
-		}
-
-		# enable fancy indexing
-		fancyindex on;
-		fancyindex_exact_size off;
-		fancyindex_ignore ^gmn$ ^10G.test$ ^custom ^favicon.ico$ ^games$ ^backups$;
-
-		location / {	
-		# First attempt to serve request as file, then
-		# as a directory, then fall back to displaying a 404.
-			try_files $uri $uri/index.html $uri.html $uri/ =404;
-		}
-
-		# append trailing slash to gallery if needed
-		location ~ /pics {
-			rewrite ^([^.]*[^/])$ $1/ permanent;
-		}
-
-		# 10gb file for test download
-		location = /10G.test {
-			auth_basic "off";
-		}
-	}
+        # tell nginx what sort of content we'll be displaying
+        include       mime.types;
+        default_type  application/octet-stream;
+        sendfile      on;
 }
