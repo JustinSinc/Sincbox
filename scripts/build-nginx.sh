@@ -5,12 +5,20 @@
 # you can skip a given dependency check by setting the `skipdeps` environment variable
 # i.e. `skipdeps=golang,gnupg ./build-nginx.sh`
 
-# select the nginx version to build
-LATESTNGINX="1.17.4"
+# exit on error
+set -e
 
-# choose where to put the build files
-# by default this is in a temporary directory
-BUILDROOT=`mktemp -d`
+# display last non-zero exit code in a failed pipeline
+set -o pipefail
+
+# subshells and functions inherit ERR traps
+set -E
+
+# select the nginx version to build
+NGINX="1.17.5"
+
+# select the openssl branch to build
+OPENSSL="OpenSSL_1_1_1-stable"
 
 # choose what software and version the server will report as
 SERVER="GNU Netcat"
@@ -18,6 +26,16 @@ VERSION="0.7.1"
 
 # set core count for make
 core_count="$(grep -c ^processor /proc/cpuinfo)"
+
+# choose where to put the build files
+# by default this is in a temporary directory
+BUILDROOT=`mktemp -d`
+
+# remove the build directory on exit
+function cleanup {
+	sudo rm -rf "$BUILDROOT"
+}
+trap cleanup EXIT
 
 # if the user is skipping dependency checks, warn them
 if [ -z "$skipdeps" ]; then 
@@ -56,7 +74,7 @@ if command -v pacman 2>&1 >/dev/null; then
 # if apt is installed, use the debian dependencies
 elif command -v apt 2>&1 >/dev/null; then
 	# create array of dependencies
-	declare -a dependencies=("build-essential" "gcc" "g++" "cmake" "git" "gnupg" "golang" "libpcre3-dev" "curl" "zlib1g-dev" "libcurl4-openssl-dev" "sudo")
+	declare -a dependencies=("build-essential" "gcc" "g++" "cmake" "git" "gnupg" "golang" "libpcre3" "libpcre3-dev" "curl" "zlib1g-dev" "libcurl4-openssl-dev" "sudo")
 
 	# check if dependencies are installed; if not, list the missing dependencies. if not available for the current os, error out
 	for dependency in "${dependencies[@]}"; do
@@ -88,13 +106,8 @@ fi
 mkdir -p "$BUILDROOT"
 cd "$BUILDROOT"
 
-## we will use 1.1.1-dev for now due to build failures in main
-# clone the openssl dev branch
-#git clone git://git.openssl.org/openssl.git
-#cd openssl
-
-# clone the openssl 1.1.1 stable branch
-git clone -b OpenSSL_1_1_1-stable git://git.openssl.org/openssl.git
+# clone the desired openssl branch
+git clone -b "$OPENSSL" git://git.openssl.org/openssl.git
 cd openssl
 
 # use default openssl configurations
@@ -103,17 +116,17 @@ cd openssl
 # build openssl
 make -j"$core_count"
 
-# fetch the latest version of nginx
+# fetch the desired version of nginx
 mkdir -p "$BUILDROOT/nginx"
 cd "$BUILDROOT"/nginx
-curl -L -O "http://nginx.org/download/nginx-$LATESTNGINX.tar.gz"
-tar xzf "nginx-$LATESTNGINX.tar.gz"
-cd "$BUILDROOT/nginx/nginx-$LATESTNGINX"
+curl -L -O "http://nginx.org/download/nginx-$NGINX.tar.gz"
+tar xzf "nginx-$NGINX.tar.gz"
+cd "$BUILDROOT/nginx/nginx-$NGINX"
 
 # change the nginx server name strings
-sed -i "s#ngx_http_server_string\[\].*#ngx_http_server_string\[\] = \"Server: $SERVER\" CRLF;#" $BUILDROOT/nginx/nginx-$LATESTNGINX/src/http/ngx_http_header_filter_module.c
-sed -i "s#ngx_http_server_full_string\[\].*#ngx_http_server_full_string\[\] = \"Server: $SERVER $VERSION\" CRLF;#" $BUILDROOT/nginx/nginx-$LATESTNGINX/src/http/ngx_http_header_filter_module.c
-sed -i "s#ngx_http_server_build_string\[\].*#ngx_http_server_build_string\[\] = \"Server: $SERVER $VERSION\" CRLF;#" $BUILDROOT/nginx/nginx-$LATESTNGINX/src/http/ngx_http_header_filter_module.c
+sed -i "s#ngx_http_server_string\[\].*#ngx_http_server_string\[\] = \"Server: $SERVER\" CRLF;#" $BUILDROOT/nginx/nginx-$NGINX/src/http/ngx_http_header_filter_module.c
+sed -i "s#ngx_http_server_full_string\[\].*#ngx_http_server_full_string\[\] = \"Server: $SERVER $VERSION\" CRLF;#" $BUILDROOT/nginx/nginx-$NGINX/src/http/ngx_http_header_filter_module.c
+sed -i "s#ngx_http_server_build_string\[\].*#ngx_http_server_build_string\[\] = \"Server: $SERVER $VERSION\" CRLF;#" $BUILDROOT/nginx/nginx-$NGINX/src/http/ngx_http_header_filter_module.c
 
 # fetch the fancy-index module
 git clone https://github.com/aperezdc/ngx-fancyindex.git "$BUILDROOT"/ngx-fancyindex
@@ -132,6 +145,8 @@ sudo ./configure --prefix=/usr/share/nginx \
         --group=www-data \
         --with-threads \
         --with-file-aio \
+	--with-pcre \
+	--with-pcre-jit \
         --with-http_ssl_module \
         --with-http_v2_module \
         --with-http_realip_module \
