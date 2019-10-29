@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 ## script to build and configure fiche
 
+# the fiche devs have not yet implemented whitelist or blacklist functionality,
+# so it would be a good idea to restrict access to the fiche port to trusted devices
+
 # exit on error
 set -e
 
