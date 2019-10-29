@@ -30,7 +30,7 @@ logfile="/var/log/fiche.log"
 domain="seedno.de"
 
 # set the web directory
-webdir="/var/www/html/seedno.de/"
+webdir="/var/www/html"
 
 # set the fiche user
 user="fiche"
@@ -71,7 +71,7 @@ sudo mkdir /home/"$user"/"$subdir"
 sudo chown -R "$user":"$user" /home/"$user"/"$subdir"
 
 # symlink the fiche directory to your webserver root
-sudo ln -s /home/"$user"/"$subdir" "$webdir"
+sudo ln -s /home/"$user"/"$subdir" "$webdir"/"$domain"/"$subdir"
 
 # create a fiche log file and set the fiche user as owner
 sudo touch "$logfile" && sudo chown "$user":"$user" "$logfile"
@@ -82,7 +82,7 @@ cat <<EOF | sudo tee /etc/systemd/system/fiche.service
 Description=Fiche server
 
 [Service]
-ExecStart=/usr/local/bin/fiche -d "$domain"/"$subdir" -o "$webdir"/"$subdir" -l "$logfile" -u "$user" -S -s6 -p"$port"
+ExecStart=/usr/local/bin/fiche -d "$domain"/"$subdir" -o "$webdir"/"$domain"/"$subdir" -l "$logfile" -u "$user" -S -s6 -p"$port"
 
 [Install]
 WantedBy=multi-user.target
