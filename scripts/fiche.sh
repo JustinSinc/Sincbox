@@ -4,6 +4,15 @@
 # the fiche devs have not yet implemented whitelist or blacklist functionality,
 # so it would be a good idea to restrict access to the fiche port to trusted devices
 
+# sample nginx location stanza for the below setup:
+#        location /paste/ {
+#                # hide trailing slash
+#                rewrite ^/(.*)/$ /$1 permanent;
+#
+#                # serve the paste
+#                try_files $uri $uri/index.txt =404;
+#        }
+
 # exit on error
 set -e
 
@@ -21,13 +30,13 @@ logfile="/var/log/fiche.log"
 domain="seedno.de"
 
 # set the web directory
-webdir="/var/www/html/seedno.de/gists"
+webdir="/var/www/html/seedno.de/"
 
 # set the fiche user
 user="fiche"
 
 # set the subdirectory name
-subdir="gists"
+subdir="paste"
 
 # set the fiche port
 port="3001"
