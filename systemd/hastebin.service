@@ -1,0 +1,16 @@
+[Unit]
+Description=Start hastebin
+
+[Service]
+Type=forking
+User=hastebin
+WorkingDirectory=/opt/haste-server
+ExecStart=/usr/bin/node /opt/haste-server/server.js
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=pastebin
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
