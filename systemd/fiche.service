@@ -1,0 +1,8 @@
+[Unit]
+Description=Fiche server
+
+[Service]
+ExecStart=/usr/local/bin/fiche -d seedno.de/gists -o /var/www/html/seedno.de/gists -l /var/log/fiche.log -u fiche -S -s6 -p3001
+
+[Install]
+WantedBy=multi-user.target
