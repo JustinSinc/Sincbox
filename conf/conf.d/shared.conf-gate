@@ -103,6 +103,21 @@ location = /seednode.jpg {
         alias /var/www/html/shared/seednode.jpg;
 }
 
+# set lower-quality profile pic
+location = /seednode_small.jpg {
+        alias /var/www/html/shared/seednode_small.jpg;
+}
+
+# stylesheets
+location /css/ {
+        alias /var/www/html/shared/css/;
+}
+
+# fonts
+location /fonts/ {
+        alias /var/www/html/shared/fonts/;
+}
+
 # set opengraph logo
 location = /logo.jpg {
         alias /var/www/html/shared/logo.jpg;
