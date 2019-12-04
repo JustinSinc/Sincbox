@@ -78,6 +78,11 @@ location = /504.html {
         alias /var/www/html/shared/504.html;
 }
 
+# software acknowledgement page
+location = /poweredby.html {
+        alias /var/www/html/shared/poweredby.html;
+}
+
 # expose this directory for letsencrypt authentication
 location /.well-known/ {
         alias /var/www/html/.well-known/;
