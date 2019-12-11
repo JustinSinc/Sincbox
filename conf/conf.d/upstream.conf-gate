@@ -1,4 +1,12 @@
 # upstream servers for gotty
+upstream anduriel-try {
+        server <ip>:<port>;
+}
+
+upstream anduriel-watch {
+        server <ip>:<port>;
+}
+
 upstream atom-try {
         server <ip>:<port>;
 }
