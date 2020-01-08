@@ -2,12 +2,6 @@
 listen 443 ssl http2;
 listen [::]:443 ssl http2;
 
-# disable gzip to prevent CRIME and other side-channel attacks
-gzip off;
-
-# disable access logging
-#access_log off;
-
 # ssl dh params
 ssl_dhparam ssl/dhparam.pem;
 
