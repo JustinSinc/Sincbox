@@ -11,6 +11,7 @@ server {
         # enable LetsEncrypt SSL certs
         ssl_certificate /etc/letsencrypt/live/sync.seedno.de/fullchain.pem;
         ssl_certificate_key /etc/letsencrypt/live/sync.seedno.de/privkey.pem;
+        ssl_trusted_certificate /etc/letsencrypt/live/sync.seedno.de/chain.pem;
 
         # set root directory
         root /var/www/html/sync.seedno.de;
